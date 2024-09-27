@@ -2,11 +2,11 @@
 // pragma solidity ^0.8.19;
 
 // import "forge-std/Test.sol";
-// import {MainEngine} from "../../src/newMainEngine.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../src/newKannonV1.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 
 // contract SqrtFuzzTest is Test {
-//     MainEngine public mainEngine;
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public user;
 
@@ -21,25 +21,25 @@
 //         console.log("setUp - Created deployer address:", deployer);
 //         console.log("setUp - Created user address:", user);
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         console.log("setUp - Created DeployMainEngine instance at:", address(deployScript));
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         console.log("setUp - Created DeployKannonV1 instance at:", address(deployScript));
 
-//         (mainEngine,) = deployScript.run();
-//         console.log("setUp - Ran DeployMainEngine script");
-//         console.log("setUp - MainEngine deployed at:", address(mainEngine));
+//         (KannonV1,) = deployScript.run();
+//         console.log("setUp - Ran DeployKannonV1 script");
+//         console.log("setUp - KannonV1 deployed at:", address(KannonV1));
 
-//         console.log("setUp - MainEngine factory address:", address(mainEngine.factory()));
+//         console.log("setUp - KannonV1 factory address:", address(KannonV1.factory()));
 //         console.log(
-//             "setUp - MainEngine nonfungiblePositionManager address:", address(mainEngine.nonfungiblePositionManager())
+//             "setUp - KannonV1 nonfungiblePositionManager address:", address(KannonV1.nonfungiblePositionManager())
 //         );
-//         console.log("setUp - MainEngine swapRouter address:", address(mainEngine.swapRouter()));
-//         console.log("setUp - MainEngine WETH9 address:", mainEngine.WETH9());
+//         console.log("setUp - KannonV1 swapRouter address:", address(KannonV1.swapRouter()));
+//         console.log("setUp - KannonV1 WETH9 address:", KannonV1.WETH9());
 
 //         console.log("setUp - Setup completed");
 //     }
 
 //     function testSqrtFuzzed(uint256 x) public {
-//         uint256 y = mainEngine.sqrt(x);
+//         uint256 y = KannonV1.sqrt(x);
 
 //         // Test basic properties
 //         assertLe(y * y, x, "y^2 should be less than or equal to x");
@@ -69,7 +69,7 @@
 
 //         // Test for monotonicity
 //         if (x > 0) {
-//             uint256 prevY = mainEngine.sqrt(x - 1);
+//             uint256 prevY = KannonV1.sqrt(x - 1);
 //             assertGe(y, prevY, "sqrt should be monotonically increasing");
 //         }
 
@@ -80,7 +80,7 @@
 
 //         // Test for gas efficiency (this is a rough estimate)
 //         uint256 gasStart = gasleft();
-//         mainEngine.sqrt(x);
+//         KannonV1.sqrt(x);
 
 //         // Test for consistency with a different implementation
 //         uint256 altY = alternativeSqrt(x);

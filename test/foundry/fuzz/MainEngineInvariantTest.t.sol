@@ -3,32 +3,32 @@
 
 // import {InvariantTest} from "forge-std/InvariantTest.sol";
 // import {Test} from "forge-std/Test.sol";
-// import {MainEngine} from "../../../src/solving-overflow-and-underflow-error.sol";
-// import {MainEngineHandler} from "./MainEngineHandler.t.sol";
-// import {DeployMainEngine} from "../../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../../src/solving-overflow-and-underflow-error.sol";
+// import {KannonV1Handler} from "./KannonV1Handler.t.sol";
+// import {DeployKannonV1} from "../../../script/deployKannonV1.s.sol";
 // import {CustomToken} from "../../../src/customToken.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
-// contract MainEngineInvariantTest is InvariantTest, Test {
-//     MainEngine public mainEngine;
-//     MainEngineHandler public handler;
+// contract KannonV1InvariantTest is InvariantTest, Test {
+//     KannonV1 public KannonV1;
+//     KannonV1Handler public handler;
 //     address public user;
 
 //     // Define constants for bounds (optional, since handler manages it)
 //     uint256 constant LIQUIDITY_LOCK_PERIOD = 3 days;
 
 //     function setUp() public {
-//         // Deploy MainEngine
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         (mainEngine,) = deployScript.run();
+//         // Deploy KannonV1
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         (KannonV1,) = deployScript.run();
 
 //         // Create user address
 //         user = makeAddr("user");
 
 //         // Instantiate handler
-//         handler = new MainEngineHandler(mainEngine, user);
+//         handler = new KannonV1Handler(KannonV1, user);
 
 //         // Set the target contract for invariant testing
 //         targetContract(address(handler));
@@ -52,7 +52,7 @@
 //             address tokenAddress = createdTokens[i];
 //             require(tokenAddress != address(0), "Invalid token address");
 
-//             // Fetch token information from MainEngine
+//             // Fetch token information from KannonV1
 //             (
 //                 address creator,
 //                 bool initialLiquidityAdded,
@@ -62,7 +62,7 @@
 //                 uint256 creationTime,
 //                 address poolAddress,
 //                 uint128 liquidity
-//             ) = mainEngine.tokenInfo(tokenAddress);
+//             ) = KannonV1.tokenInfo(tokenAddress);
 
 //             // **Invariant 1:** Creator should be the user
 //             assertEq(creator, user, "Creator mismatch");
@@ -86,8 +86,8 @@
 //             // **Invariant 7:** Liquidity should be greater than zero
 //             assertGt(liquidity, 0, "No liquidity added");
 
-//             // **Invariant 8:** Token balance of MainEngine should be greater than zero
-//             assertGt(IERC20(tokenAddress).balanceOf(address(mainEngine)), 0, "MainEngine token balance is zero");
+//             // **Invariant 8:** Token balance of KannonV1 should be greater than zero
+//             assertGt(IERC20(tokenAddress).balanceOf(address(KannonV1)), 0, "KannonV1 token balance is zero");
 
 //             // **Invariant 9:** Total supply of the token should be greater than zero
 //             assertGt(IERC20(tokenAddress).totalSupply(), 0, "Total supply is zero");
@@ -98,7 +98,7 @@
 //             assertEq(pool.fee(), expectedFee, "Pool fee mismatch");
 
 //             // **Invariant 11:** Verify position details
-//             INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+//             INonfungiblePositionManager positionManager = KannonV1.nonfungiblePositionManager();
 //             (
 //                 ,
 //                 ,

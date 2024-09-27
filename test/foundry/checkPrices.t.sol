@@ -2,17 +2,17 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// // import {MainEngine} from "../../src/solving-overflow-and-underflow-error.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
+// // import {KannonV1} from "../../src/solving-overflow-and-underflow-error.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
 
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-// import {MainEngineLibrary} from "../../src/mainEngineLibrary.sol";
-// contract MainEngineTest is Test {
-//     MainEngine public mainEngine;
+// import {KannonV1Library} from "../../src/KannonV1Library.sol";
+// contract KannonV1Test is Test {
+//     KannonV1 public KannonV1;
 //     address public user;
 //     // uint256 constant INITIAL_ETH = 0.1 ether;
 //     address public deployer;
@@ -29,9 +29,9 @@
 //         //console.log("setUp - Created deployer address:", deployer);
 //         //console.log("setUp - Created user address:", user);
 //         vm.deal(user, 100000000000 ether);
-//         DeployMainEngine deployScript = new DeployMainEngine();
+//         DeployKannonV1 deployScript = new DeployKannonV1();
 
-//         (mainEngine,) = deployScript.run();
+//         (KannonV1,) = deployScript.run();
 //     }
 
 //     function testcreateTokenAndAddLiquidityAndCheckPricing() public {
@@ -57,7 +57,7 @@
 //             // Calculate expected price (ETH/token)
 //             expectedPrices[i] = (ethAmount * 1e8 ) / initialSupply;
 
-//             address tokenAddress = mainEngine.createTokenAndAddLiquidity{value: ethAmount}(
+//             address tokenAddress = KannonV1.createTokenAndAddLiquidity{value: ethAmount}(
 //                 user,
 //                 name,
 //                 symbol,
@@ -88,7 +88,7 @@
 //                 uint256 creationTime,
 //                 address poolAddress,
 //                 uint128 liquidity
-//             ) = mainEngine.tokenInfo(tokenAddress);
+//             ) = KannonV1.tokenInfo(tokenAddress);
 
 //             assertEq(creator, user, "Creator mismatch");
 //             assertTrue(initialLiquidityAdded, "Initial liquidity not added");
@@ -100,8 +100,8 @@
 //             assertGt(liquidity, 0, "No liquidity added");
 
 //             // Check current price
-//             MainEngine.TokenInfo memory  tokenInfo = mainEngine.tokenInfo[tokenAddress];
-//             uint256 currentPrice = MainEngineLibrary.getCurrentPrice(tokenAddress,mainEngine.WETH9(),tokenInfo.pool);
+//             KannonV1.TokenInfo memory  tokenInfo = KannonV1.tokenInfo[tokenAddress];
+//             uint256 currentPrice = KannonV1Library.getCurrentPrice(tokenAddress,KannonV1.WETH9(),tokenInfo.pool);
 //             console.log("Token", i, "- Expected price:", expectedPrices[i]);
 //             console.log("Token", i, "- Actual price:", currentPrice);
 
@@ -111,7 +111,7 @@
 
 //         // Additional checks after all tokens have been created
 //         for (uint256 i = 0; i < numTokens; i++) {
-//             uint256 finalPrice = MainEngineLibrary.getCurrentPrice(tokenAddresses[i]);
+//             uint256 finalPrice = KannonV1Library.getCurrentPrice(tokenAddresses[i]);
 //             console.log("Final check - Token", i, "price:", finalPrice);
 //             assertEq(finalPrice, expectedPrices[i],  "Final price mismatch");
 //         }

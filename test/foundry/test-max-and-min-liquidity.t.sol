@@ -2,14 +2,14 @@
 pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MainEngine} from "../../src/mainEngine.sol";
+import {KannonV1} from "../../src/kannon_v1.sol";
 import {CustomToken} from "../../src/customToken.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 
-contract MainEngineTestMaxMin is Test {
-    MainEngine public mainEngine;
+contract KannonV1TestMaxMin is Test {
+    KannonV1 public kannonV1;
     address public user;
     address public deployer;
     uint256 constant ETH_AMOUNT = 1 ether;
@@ -19,9 +19,9 @@ contract MainEngineTestMaxMin is Test {
         user = makeAddr("user");
 
         vm.deal(user, 100000000000 ether);
-        DeployMainEngine deployScript = new DeployMainEngine();
+        DeployKannonV1 deployScript = new DeployKannonV1();
 
-        (mainEngine,) = deployScript.run();
+        (kannonV1,) = deployScript.run();
     }
 
     function testMaxTokenSupplyRatio() public {
@@ -45,7 +45,7 @@ contract MainEngineTestMaxMin is Test {
             console.log("ETH Amount:", ETH_AMOUNT);
             console.log("Current Ratio (InitialSupply / ETH_AMOUNT):", ratio);
 
-            try mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+            try kannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
                 user,
                 name,
                 symbol,
@@ -71,7 +71,7 @@ contract MainEngineTestMaxMin is Test {
                     uint256 creationTime,
                     address poolAddress,
                     uint128 liquidity
-                ) = mainEngine.tokenInfo(tokenAddress);
+                ) = kannonV1.tokenInfo(tokenAddress);
 
                 assertEq(creator, user, "Creator mismatch");
                 assertTrue(initialLiquidityAdded, "Initial liquidity not added");
@@ -87,7 +87,7 @@ contract MainEngineTestMaxMin is Test {
                 IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
                 assertEq(pool.fee(), fee, "Pool fee mismatch");
 
-                INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+                INonfungiblePositionManager positionManager = kannonV1.nonfungiblePositionManager();
                 (
                     ,
                     ,
@@ -141,7 +141,7 @@ contract MainEngineTestMaxMin is Test {
             console.log("ETH Amount:", ETH_AMOUNT);
             console.log("Current Ratio (InitialSupply / ETH_AMOUNT):", ratio);
 
-            try mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+            try kannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
                 user,
                 name,
                 symbol,
@@ -167,7 +167,7 @@ contract MainEngineTestMaxMin is Test {
                     uint256 creationTime,
                     address poolAddress,
                     uint128 liquidity
-                ) = mainEngine.tokenInfo(tokenAddress);
+                ) = kannonV1.tokenInfo(tokenAddress);
 
                 assertEq(creator, user, "Creator mismatch");
                 assertTrue(initialLiquidityAdded, "Initial liquidity not added");
@@ -183,7 +183,7 @@ contract MainEngineTestMaxMin is Test {
                 IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
                 assertEq(pool.fee(), fee, "Pool fee mismatch");
 
-                INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+                INonfungiblePositionManager positionManager = kannonV1.nonfungiblePositionManager();
                 (
                     ,
                     ,
@@ -237,7 +237,7 @@ contract MainEngineTestMaxMin is Test {
             console.log("ETH Amount:", ethAmount);
             console.log("Current Ratio (InitialSupply / ETH_AMOUNT):", ratio);
 
-            try mainEngine.createTokenAndAddLiquidity{value: ethAmount}(
+            try kannonV1.createTokenAndAddLiquidity{value: ethAmount}(
                 user,
                 name,
                 symbol,
@@ -263,7 +263,7 @@ contract MainEngineTestMaxMin is Test {
                     uint256 creationTime,
                     address poolAddress,
                     uint128 liquidity
-                ) = mainEngine.tokenInfo(tokenAddress);
+                ) = kannonV1.tokenInfo(tokenAddress);
 
                 assertEq(creator, user, "Creator mismatch");
                 assertTrue(initialLiquidityAdded, "Initial liquidity not added");
@@ -279,7 +279,7 @@ contract MainEngineTestMaxMin is Test {
                 IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
                 assertEq(pool.fee(), fee, "Pool fee mismatch");
 
-                INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+                INonfungiblePositionManager positionManager = kannonV1.nonfungiblePositionManager();
                 (
                     ,
                     ,
@@ -336,7 +336,7 @@ contract MainEngineTestMaxMin is Test {
             console.log("ETH Amount:", ethAmount);
             console.log("Current Ratio (InitialSupply / ETH_AMOUNT):", ratio);
 
-            try mainEngine.createTokenAndAddLiquidity{value: ethAmount}(
+            try kannonV1.createTokenAndAddLiquidity{value: ethAmount}(
                 user,
                 name,
                 symbol,
@@ -362,7 +362,7 @@ contract MainEngineTestMaxMin is Test {
                     uint256 creationTime,
                     address poolAddress,
                     uint128 liquidity
-                ) = mainEngine.tokenInfo(tokenAddress);
+                ) = kannonV1.tokenInfo(tokenAddress);
 
                 assertEq(creator, user, "Creator mismatch");
                 assertTrue(initialLiquidityAdded, "Initial liquidity not added");
@@ -378,7 +378,7 @@ contract MainEngineTestMaxMin is Test {
                 IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
                 assertEq(pool.fee(), fee, "Pool fee mismatch");
 
-                INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+                INonfungiblePositionManager positionManager = kannonV1.nonfungiblePositionManager();
                 (
                     ,
                     ,

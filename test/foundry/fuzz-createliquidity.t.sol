@@ -3,14 +3,14 @@
 
 // import {InvariantTest} from "forge-std/InvariantTest.sol";
 // import {Test} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/solving-overflow-and-underflow-error.sol";
+// import {KannonV1} from "../../src/solving-overflow-and-underflow-error.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 
-// contract MainEngineInvariantTest2 is InvariantTest, Test {
-//     MainEngine public mainEngine;
+// contract KannonV1InvariantTest2 is InvariantTest, Test {
+//     KannonV1 public KannonV1;
 //     address public user;
 //     address public deployer;
 
@@ -27,9 +27,9 @@
 //         // Fund the user with a large amount of ETH
 //         vm.deal(user, 100000000000 ether);
 
-//         // Deploy the MainEngine contract
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         (mainEngine,) = deployScript.run();
+//         // Deploy the KannonV1 contract
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         (KannonV1,) = deployScript.run();
 //     }
 
 //     /**
@@ -61,7 +61,7 @@
 //         uint256 lockedLiquidityPercentage = uint256(bound(lockedLiquidityPercentage(), 1, 100)); // Ensure 1-100%
 
 //         // Call `createTokenAndAddLiquidity`
-//         address tokenAddress = mainEngine.createTokenAndAddLiquidity{value: ethAmount}(
+//         address tokenAddress = KannonV1.createTokenAndAddLiquidity{value: ethAmount}(
 //             user,
 //             name,
 //             symbol,
@@ -87,7 +87,7 @@
 //             uint256 creationTime,
 //             address poolAddress,
 //             uint128 liquidity
-//         ) = mainEngine.tokenInfo(tokenAddress);
+//         ) = KannonV1.tokenInfo(tokenAddress);
 
 //         // Fetch the token contract
 //         CustomToken token = CustomToken(tokenAddress);
@@ -125,7 +125,7 @@
 //         assertEq(pool.fee(), expectedFee, "Pool fee mismatch");
 
 //         // **Invariant 10:** Verify position details
-//         INonfungiblePositionManager positionManager = mainEngine.nonfungiblePositionManager();
+//         INonfungiblePositionManager positionManager = KannonV1.nonfungiblePositionManager();
 //         (
 //             ,
 //             ,

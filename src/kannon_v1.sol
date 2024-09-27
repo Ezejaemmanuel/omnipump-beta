@@ -9,10 +9,8 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-// solc-ignore-next-line invalid-import
 import {ISwapRouter02} from "@uniswap/v3-swap-routers/contracts/interfaces/ISwapRouter02.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {IWETH9} from "../test/mocks/IWETH.sol";
 import {IV3SwapRouter} from "lib/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 
@@ -23,12 +21,12 @@ import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/li
 import {MessagingFee, OFTReceipt, SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IStargate} from "lib/stargate-v2/packages/stg-evm-v2/src/interfaces/IStargate.sol";
-import {MainEngineLibrary} from "./mainEngineLibrary.sol";
+import { KannonV1Library} from "./kannon_v1_library.sol";
 
-contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
+contract KannonV1 is IERC721Receiver, Ownable, ILayerZeroComposer {
     uint256 public constant LIQUIDITY_LOCK_PERIOD = 3 days;
     uint24 public constant poolFee = 3000; // 0.3%
-    int24 constant TICK_SPACING = 60;
+   
     uint256 public immutable MIN_AMOUNT = 1e15;
 
     using OptionsBuilder for bytes;
@@ -108,17 +106,17 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 timestamp
     );
 
-    error InsufficientFunds();
-    error Unauthorized();
-    error InvalidInput();
-    error InvalidOperation();
-    error TimingConstraint();
-    error CalculationError();
-    error TransferFailed();
-    error InvalidParameters();
-    error LiquidityError();
-    error InsufficientFundsForCrossMessage();
-    error WETH9Failed();
+    error KannonV1_InsufficientFunds();
+    error KannonV1_Unauthorized();
+    error KannonV1_InvalidInput();
+    error KannonV1_InvalidOperation();
+    error KannonV1_TimingConstraint();
+    error KannonV1_TransferFailed();
+    error KannonV1_InvalidParameters();
+    error KannonV1_LiquidityError();
+    error KannonV1_InsufficientFundsForCrossMessage();
+    error KannonV1_WETH9Failed();
+    error KannonV1_PoolNotInitialized();
     constructor(
         IUniswapV3Factory _factory,
         INonfungiblePositionManager _nonfungiblePositionManager,
@@ -136,7 +134,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     }
 
     modifier onlyTokenCreator(address tokenAddress) {
-        if (msg.sender != tokenInfo[tokenAddress].creator) revert Unauthorized();
+        if (msg.sender != tokenInfo[tokenAddress].creator) revert KannonV1_Unauthorized();
         _;
     }
 
@@ -151,7 +149,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         string memory website,
         uint256 initialSupply,
         uint256 lockedLiquidityPercentage
-    ) public payable returns (address tokenAddress) {
+    ) external payable returns (address tokenAddress) {
         return _createTokenAndAddLiquidity(
             tokenCreator,
             name,
@@ -182,14 +180,14 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     ) internal returns (address tokenAddress) {
         //TODO CHANGE TO 0.005
         if (ethAmount < MIN_AMOUNT) {
-            revert InsufficientFunds();
+            revert KannonV1_InsufficientFunds();
         }
         //TODO ADD UP TO RATIO IF STATEMNT
         // Wrap the ETH to WETH9
         _wrapETH(ethAmount);
 
         if (initialSupply == 0 || lockedLiquidityPercentage > 100) {
-            revert InvalidInput();
+            revert KannonV1_InvalidInput();
         }
         tokenAddress = _createToken(name, symbol, description, imageUrl, twitter, telegram, website, initialSupply);
 
@@ -206,10 +204,10 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         _setupPool(tokenAddress, ethAmount);
 
-        (uint160 sqrtPriceX96, int24 tick) = MainEngineLibrary.getPoolSlot0(tokenInfo[tokenAddress].pool);
-        uint256 currentPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
+        (uint160 sqrtPriceX96, int24 tick) = KannonV1Library.getPoolSlot0(tokenInfo[tokenAddress].pool);
+        uint256 currentPrice = KannonV1Library.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
 
-        (int24 lower, int24 upper) = MainEngineLibrary.calculateTickRange(tick, currentPrice);
+        (int24 lower, int24 upper) = KannonV1Library.calculateTickRange(tick, currentPrice);
 
         _addInitialLiquidity(tokenAddress, initialSupply, ethAmount, lower, upper);
 
@@ -234,13 +232,13 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 ethAmount
     ) internal returns (address tokenAddress) {
         if (ethAmount < MIN_AMOUNT) {
-            revert InsufficientFunds();
+            revert KannonV1_InsufficientFunds();
         }
         // Wrap the ETH to WETH9
         _wrapETH(ethAmount);
 
         if (initialSupply == 0 || lockedLiquidityPercentage > 100) {
-            revert InvalidInput();
+            revert KannonV1_InvalidInput();
         }
         tokenAddress = _createToken(name, symbol, description, imageUrl, twitter, telegram, website, initialSupply);
 
@@ -257,10 +255,10 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         _setupPool(tokenAddress, ethAmount);
 
-        (uint160 sqrtPriceX96, int24 tick) = MainEngineLibrary.getPoolSlot0(tokenInfo[tokenAddress].pool);
-        uint256 currentPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
+        (uint160 sqrtPriceX96, int24 tick) = KannonV1Library.getPoolSlot0(tokenInfo[tokenAddress].pool);
+        uint256 currentPrice = KannonV1Library.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
 
-        (int24 lower, int24 upper) = MainEngineLibrary.calculateTickRange(tick, currentPrice);
+        (int24 lower, int24 upper) = KannonV1Library.calculateTickRange(tick, currentPrice);
 
         _addInitialLiquidity(tokenAddress, initialSupply, ethAmount, lower, upper);
 
@@ -285,7 +283,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         tokenAddress = Create2.deploy(
             0,
             salt,
-            abi.encodePacked(
+            abi.encode(
                 type(CustomToken).creationCode,
                 abi.encode(
                     name, symbol, description, imageUrl, twitter, telegram, website, address(this), initialSupply
@@ -298,11 +296,11 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
     function _setupPool(address tokenAddress, uint256 ethAmount) internal {
         if (tokenInfo[tokenAddress].pool != address(0)) {
-            revert();
+            revert KannonV1_PoolNotInitialized();
         }
 
         // Order tokens
-        (address token0, address token1) = MainEngineLibrary.orderTokens(tokenAddress, WETH9);
+        (address token0, address token1) = KannonV1Library.orderTokens(tokenAddress, WETH9);
 
         // Create pool
         address pool = factory.createPool(token0, token1, poolFee);
@@ -312,7 +310,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 tokenAmount = IERC20Metadata(tokenAddress).balanceOf(address(this));
 
         // Calculate the initial sqrtPriceX96
-        uint160 sqrtPriceX96 = MainEngineLibrary.calculateInitialSqrtPrice(
+        uint160 sqrtPriceX96 = KannonV1Library.calculateInitialSqrtPrice(
             token0,
             token1,
             token0 == tokenAddress ? tokenAmount : ethAmount,
@@ -331,13 +329,13 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         int24 tickUpper
     ) internal {
         if (tokenInfo[tokenAddress].initialLiquidityAdded) {
-            revert InvalidOperation();
+            revert KannonV1_InvalidOperation();
         }
         if (tokenAmount == 0 || ethAmount == 0) {
-            revert InvalidInput();
+            revert KannonV1_InvalidInput();
         }
 
-        (address token0, address token1) = MainEngineLibrary.orderTokens(tokenAddress, WETH9);
+        (address token0, address token1) = KannonV1Library.orderTokens(tokenAddress, WETH9);
         uint256 amount0 = (token0 == tokenAddress) ? tokenAmount : ethAmount;
         uint256 amount1 = (token1 == tokenAddress) ? tokenAmount : ethAmount;
         TransferHelper.safeApprove(token0, address(nonfungiblePositionManager), amount0);
@@ -360,7 +358,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         (uint256 tokenId, uint128 liquidity,,) = nonfungiblePositionManager.mint(params);
 
         if (liquidity <= 0) {
-            revert LiquidityError();
+            revert KannonV1_LiquidityError();
         }
 
         tokenInfo[tokenAddress].positionId = tokenId;
@@ -380,7 +378,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         bytes calldata /*_extraData*/
     ) external payable {
         if (_from != stargatePoolNative || msg.sender != endpointV2) {
-            revert Unauthorized();
+            revert KannonV1_Unauthorized();
         }
         uint256 amountLD = OFTComposeMsgCodec.amountLD(_message);
         uint32 srcEid = OFTComposeMsgCodec.srcEid(_message);
@@ -428,7 +426,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             // Update token-related data
             _emitTokenUpdate(tokenAddress);
         } else {
-            revert InvalidInput();
+            revert KannonV1_InvalidInput();
         }
     }
 
@@ -436,7 +434,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         internal
         returns (uint256 amountOut)
     {
-        if (_amount == 0) revert InsufficientFunds();
+        if (_amount == 0) revert KannonV1_InsufficientFunds();
 
         // Wrap the ETH to WETH9
         _wrapETH(_amount);
@@ -484,7 +482,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             if (_amount <= messagingFee.nativeFee) {
                 (bool success,) = _recipient.call{value: _amount}("");
                 if (!success) {
-                    revert TransferFailed();
+                    revert KannonV1_TransferFailed();
                 }
                 emit TokenTrade(
                     _tokenAddress, _recipient, TradeType.FailedCrossChainBuy, _amount, 0, 0, block.timestamp
@@ -511,20 +509,20 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     function _wrapETH(uint256 amount) internal {
         try IWETH9(WETH9).deposit{value: amount}() {}
         catch {
-            revert WETH9Failed();
+            revert KannonV1_WETH9Failed();
         }
     }
 
     function _unwrapETH(uint256 amount) internal {
         try IWETH9(WETH9).withdraw(amount) {}
         catch {
-            revert WETH9Failed();
+            revert KannonV1_WETH9Failed();
         }
     }
 
     function withdrawLiquidity(address tokenAddress, uint256 amount) external onlyTokenCreator(tokenAddress) {
-        if (block.timestamp < tokenInfo[tokenAddress].creationTime + LIQUIDITY_LOCK_PERIOD) revert TimingConstraint();
-        if (amount > tokenInfo[tokenAddress].withdrawableLiquidity) revert InsufficientFunds();
+        if (block.timestamp < tokenInfo[tokenAddress].creationTime + LIQUIDITY_LOCK_PERIOD) revert KannonV1_TimingConstraint();
+        if (amount > tokenInfo[tokenAddress].withdrawableLiquidity) revert KannonV1_InsufficientFunds();
 
         tokenInfo[tokenAddress].withdrawableLiquidity -= amount;
 
@@ -576,7 +574,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             // Transfer ETH directly to the user on the current chain
             (bool success,) = msg.sender.call{value: amountOut}("");
             if (!success) {
-                revert TransferFailed();
+                revert KannonV1_TransferFailed();
             }
             // Get price after trade
 
@@ -595,10 +593,10 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 tokenAmount
     ) internal {
         if (dstEid == 0) {
-            revert InvalidParameters();
+            revert KannonV1_InvalidParameters();
         }
         if (amount == 0) {
-            revert InvalidInput();
+            revert KannonV1_InvalidInput();
         }
 
         bytes32 to = OFTComposeMsgCodec.addressToBytes32(recipient);
@@ -621,10 +619,10 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         // Combined check for insufficient ETH and minimum send amount
         if (amount <= messagingFee.nativeFee) {
-            revert InsufficientFundsForCrossMessage();
+            revert KannonV1_InsufficientFundsForCrossMessage();
         }
         if (amount - messagingFee.nativeFee < MIN_AMOUNT) {
-            revert InsufficientFundsForCrossMessage();
+            revert KannonV1_InsufficientFundsForCrossMessage();
         }
         sendParam.amountLD = amount - messagingFee.nativeFee;
 
@@ -632,7 +630,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     }
 
     function swapExactETHForTokens(address tokenAddress) external payable returns (uint256) {
-        if (msg.value == 0) revert InsufficientFunds();
+        if (msg.value == 0) revert KannonV1_InsufficientFunds();
         // Get price before trade
         _wrapETH(msg.value);
 
@@ -663,12 +661,12 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint128 liquidity = IUniswapV3Pool(pool).liquidity();
 
         (uint256 tokenReserve, uint256 ethReserve) =
-            MainEngineLibrary.getPoolReserves(tokenAddress, WETH9, tokenInfo[tokenAddress].pool);
+            KannonV1Library.getPoolReserves(tokenAddress, WETH9, tokenInfo[tokenAddress].pool);
 
         uint256 totalSupply = IERC20Metadata(tokenAddress).totalSupply();
         uint256 liquidatedLiquidity = tokenInfo[tokenAddress].liquidity - tokenInfo[tokenAddress].withdrawableLiquidity;
         address creator = tokenInfo[tokenAddress].creator;
-        uint256 tokenPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
+        uint256 tokenPrice = KannonV1Library.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
         emit TokenUpdate(
             tokenAddress,
             creator,

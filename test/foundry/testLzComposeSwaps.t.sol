@@ -2,8 +2,8 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console,Vm} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -11,8 +11,8 @@
 // import {IQuoterV2} from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
 // import {LiquidityAmounts} from "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
-// contract MainEngineLZComposeTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1LZComposeTest is Test {
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public user;
 //     address public TOKEN_ADDRESS;
@@ -26,7 +26,7 @@
 //     event TokenTrade(
 //         address indexed tokenAddress,
 //         address indexed trader,
-//         MainEngine.TradeType tradeType,
+//         KannonV1.TradeType tradeType,
 //         uint256 inputAmount,
 //         uint256 outputAmount,
 //         uint256 timestamp
@@ -53,10 +53,10 @@
 //         vm.deal(deployer, 10000000000000000 ether);
 //         vm.deal(user, 100000000000000000000 ether);
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         (mainEngine,) = deployScript.run();
-//         WETH9 = mainEngine.WETH9();
-//         vm.deal(address(mainEngine),5 ether);
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         (KannonV1,) = deployScript.run();
+//         WETH9 = KannonV1.WETH9();
+//         vm.deal(address(KannonV1),5 ether);
 
 //         // Create token and add liquidity
 //         TOKEN_ADDRESS = createTokensAndAddLiquidity();
@@ -79,7 +79,7 @@
 //         uint256 initialSupply = INITIAL_TOKEN_AMOUNT;
 //         address tokenCreator = msg.sender;
 
-//         address tokenAddr = mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+//         address tokenAddr = KannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
 //             tokenCreator,
 //             name,
 //             symbol,
@@ -93,7 +93,7 @@
 //         );
 
 //         assertTrue(tokenAddr != address(0), "Token creation failed");
-//         (, bool initialLiquidityAdded,,,,, address pool,) = mainEngine.tokenInfo(tokenAddr);
+//         (, bool initialLiquidityAdded,,,,, address pool,) = KannonV1.tokenInfo(tokenAddr);
 //         assertTrue(initialLiquidityAdded, "Initial liquidity not added");
 //         assertTrue(pool != address(0), "Pool not created");
 
@@ -104,10 +104,8 @@
 //         uint256 swapAmount = 0.1 ether;
 //         address recipient = address(0x123);
 
-
-
-//         vm.prank(address(mainEngine));
-//         uint256 amountOut = mainEngine.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, swapAmount, recipient);
+//         vm.prank(address(KannonV1));
+//         uint256 amountOut = KannonV1.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, swapAmount, recipient);
 
 //         assertTrue(amountOut > 0, "Swap should return tokens");
 //         assertGt(IERC20(TOKEN_ADDRESS).balanceOf(recipient), 0, "Recipient should receive tokens");
@@ -120,11 +118,10 @@
 //         // Simulate a swap failure by using an invalid token address
 //         address invalidToken = makeAddr("fake_token");
 
-     
-//         vm.prank(address(mainEngine));
+//         vm.prank(address(KannonV1));
 //         console.log("this is the reciepient balance before ",recipient.balance);
 
-//         uint256 amountOut = mainEngine.exposed_lzComposeSwapExactETHForTokens(invalidToken, swapAmount, recipient);
+//         uint256 amountOut = KannonV1.exposed_lzComposeSwapExactETHForTokens(invalidToken, swapAmount, recipient);
 //         console.log("this is the reciepient balance after ",recipient.balance);
 
 //         assertEq(amountOut, 0, "Failed swap should return 0");
@@ -134,18 +131,18 @@
 //     function testLZComposeSwapExactETHForTokensZeroAmount() public {
 //         address recipient = makeAddr("recipient_user");
 
-//         vm.expectRevert(MainEngine.MustSendETH.selector);
-//         vm.prank(address(mainEngine));
-//         mainEngine.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, 0, recipient);
+//         vm.expectRevert(KannonV1.MustSendETH.selector);
+//         vm.prank(address(KannonV1));
+//         KannonV1.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, 0, recipient);
 //     }
 
 //     function testLZComposeSwapExactETHForTokensRefundFailure() public {
 //         uint256 swapAmount = 0.1 ether;
 //         address payable badRecipient = payable(address(new RevertingContract()));
 
-//         vm.expectRevert(MainEngine.TransferEthFailed.selector);
-//         vm.prank(address(mainEngine));
-//         mainEngine.exposed_lzComposeSwapExactETHForTokens(address(0x456), swapAmount, badRecipient);
+//         vm.expectRevert(KannonV1.TransferEthFailed.selector);
+//         vm.prank(address(KannonV1));
+//         KannonV1.exposed_lzComposeSwapExactETHForTokens(address(0x456), swapAmount, badRecipient);
 //     }
 
 //     function testLZComposeSwapExactETHForTokensEventData() public {
@@ -154,8 +151,8 @@
 
 //         vm.recordLogs();
 
-//         vm.prank(address(mainEngine));
-//         mainEngine.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, swapAmount, recipient);
+//         vm.prank(address(KannonV1));
+//         KannonV1.exposed_lzComposeSwapExactETHForTokens(TOKEN_ADDRESS, swapAmount, recipient);
 
 //         Vm.Log[] memory entries = vm.getRecordedLogs();
 
@@ -177,5 +174,3 @@
 //         revert("Always reverts");
 //     }
 // }
-
-

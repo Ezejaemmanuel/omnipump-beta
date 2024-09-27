@@ -2,14 +2,14 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-// contract MainEngineCreateTokenTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1CreateTokenTest is Test {
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public user;
 
@@ -23,19 +23,19 @@
 //         console.log("setUp - Created deployer address:", deployer);
 //         console.log("setUp - Created user address:", user);
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         console.log("setUp - Created DeployMainEngine instance at:", address(deployScript));
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         console.log("setUp - Created DeployKannonV1 instance at:", address(deployScript));
 
-//         (mainEngine,) = deployScript.run();
-//         console.log("setUp - Ran DeployMainEngine script");
-//         console.log("setUp - MainEngine deployed at:", address(mainEngine));
+//         (KannonV1,) = deployScript.run();
+//         console.log("setUp - Ran DeployKannonV1 script");
+//         console.log("setUp - KannonV1 deployed at:", address(KannonV1));
 
-//         console.log("setUp - MainEngine factory address:", address(mainEngine.factory()));
+//         console.log("setUp - KannonV1 factory address:", address(KannonV1.factory()));
 //         console.log(
-//             "setUp - MainEngine nonfungiblePositionManager address:", address(mainEngine.nonfungiblePositionManager())
+//             "setUp - KannonV1 nonfungiblePositionManager address:", address(KannonV1.nonfungiblePositionManager())
 //         );
-//         console.log("setUp - MainEngine swapRouter address:", address(mainEngine.swapRouter02()));
-//         console.log("setUp - MainEngine WETH9 address:", mainEngine.WETH9());
+//         console.log("setUp - KannonV1 swapRouter address:", address(KannonV1.swapRouter02()));
+//         console.log("setUp - KannonV1 WETH9 address:", KannonV1.WETH9());
 
 //         console.log("setUp - Setup completed");
 //     }
@@ -56,7 +56,7 @@
 //         uint256 initialSupply = 0.01 * 1e18; // 1 million tokens
 
 //         console.log("createTestToken - Creating token");
-//         address tokenAddress = mainEngine.createTokenForTest(
+//         address tokenAddress = KannonV1.createTokenForTest(
 //             name, symbol, description, imageUrl, twitter, telegram, website, initialSupply
 //         );
 //         console.log("createTestToken - Token created at address:", tokenAddress);
@@ -69,7 +69,7 @@
 //         assertEq(testToken.getDescription(), description, "Token description mismatch");
 //         assertEq(testToken.getImageUrl(), imageUrl, "Token image URL mismatch");
 //         assertEq(testToken.totalSupply(), initialSupply, "Token initial supply mismatch");
-//         assertEq(testToken.owner(), address(mainEngine), "Token owner should be the MainEngine");
+//         assertEq(testToken.owner(), address(KannonV1), "Token owner should be the KannonV1");
 
 //         console.log("createTestToken - Token creation verified");
 
@@ -80,7 +80,7 @@
 //     }
 
 //     // function testSqrtLargeNumber() public {
-//     //     assertEq(mainEngine.sqrt(1000000), 1000, "Square root of 1,000,000 should be 1,000");
+//     //     assertEq(KannonV1.sqrt(1000000), 1000, "Square root of 1,000,000 should be 1,000");
 //     // }
 
 //     function testSetupPool() public {
@@ -96,10 +96,10 @@
 //         // Setup the pool with a specified amount of ETH
 //         uint256 ethAmount = 1 ether; // Example ETH amount
 //         console.log("testSetupPool - Setting up pool with ETH amount:", ethAmount);
-//         mainEngine.testSetupPool{value: 0.01 ether}(tokenAddress);
+//         KannonV1.testSetupPool{value: 0.01 ether}(tokenAddress);
 
 //         // Verify pool setup
-//         (address creator,,,,,, address poolAddress,) = mainEngine.tokenInfo(tokenAddress);
+//         (address creator,,,,,, address poolAddress,) = KannonV1.tokenInfo(tokenAddress);
 //         console.log("testSetupPool - Verifying pool setup");
 //         console.log("testSetupPool - Pool address:", poolAddress);
 
@@ -117,12 +117,12 @@
 //             pool.token0() == tokenAddress || pool.token1() == tokenAddress, "Pool should contain the created token"
 //         );
 //         assertTrue(
-//             pool.token0() == mainEngine.WETH9() || pool.token1() == mainEngine.WETH9(), "Pool should contain WETH9"
+//             pool.token0() == KannonV1.WETH9() || pool.token1() == KannonV1.WETH9(), "Pool should contain WETH9"
 //         );
-//         assertEq(pool.fee(), mainEngine.poolFee(), "Pool fee mismatch");
+//         assertEq(pool.fee(), KannonV1.poolFee(), "Pool fee mismatch");
 
 //         // Verify factory state
-//         address factoryPoolAddress = mainEngine.factory().getPool(pool.token0(), pool.token1(), mainEngine.poolFee());
+//         address factoryPoolAddress = KannonV1.factory().getPool(pool.token0(), pool.token1(), KannonV1.poolFee());
 //         console.log("testSetupPool - Verifying factory state");
 //         console.log("testSetupPool - Factory pool address:", factoryPoolAddress);
 

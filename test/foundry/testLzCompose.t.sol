@@ -2,17 +2,17 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/eventsMainEngine.sol";
+// import {KannonV1} from "../../src/eventsKannonV1.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 // import {Vm} from "forge-std/Test.sol";
 // import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
-// contract MainEngineTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1Test is Test {
+//     KannonV1 public KannonV1;
 //     address public user;
 //     // uint256 constant INITIAL_ETH = 0.1 ether;
 //     uint256 constant MIN_CREATE_COST = 0.0001 ether;
@@ -30,20 +30,20 @@
 //         console.log("setUp - Created deployer address:", deployer);
 //         console.log("setUp - Created user address:", user);
 //         vm.deal(user, 1000 ether);
-//         DeployMainEngine deployScript = new DeployMainEngine();
+//         DeployKannonV1 deployScript = new DeployKannonV1();
 
-//         console.log("setUp - Created DeployMainEngine instance at:", address(deployScript));
+//         console.log("setUp - Created DeployKannonV1 instance at:", address(deployScript));
 
-//         (mainEngine,) = deployScript.run();
-//         console.log("setUp - Ran DeployMainEngine script");
-//         console.log("setUp - MainEngine deployed at:", address(mainEngine));
+//         (KannonV1,) = deployScript.run();
+//         console.log("setUp - Ran DeployKannonV1 script");
+//         console.log("setUp - KannonV1 deployed at:", address(KannonV1));
 
-//         console.log("setUp - MainEngine factory address:", address(mainEngine.factory()));
+//         console.log("setUp - KannonV1 factory address:", address(KannonV1.factory()));
 //         console.log(
-//             "setUp - MainEngine nonfungiblePositionManager address:", address(mainEngine.nonfungiblePositionManager())
+//             "setUp - KannonV1 nonfungiblePositionManager address:", address(KannonV1.nonfungiblePositionManager())
 //         );
-//         console.log("setUp - MainEngine swapRouter address:", address(mainEngine.swapRouter02()));
-//         console.log("setUp - MainEngine WETH9 address:", mainEngine.WETH9());
+//         console.log("setUp - KannonV1 swapRouter address:", address(KannonV1.swapRouter02()));
+//         console.log("setUp - KannonV1 WETH9 address:", KannonV1.WETH9());
 
 //         console.log("setUp - Setup completed");
 //     }
@@ -52,8 +52,8 @@
 //     console.log("testLzComposeTokenCreationAndLiquidity - Starting test");
 
 //     // Prepare lzCompose parameters
-//     address from = mainEngine.stargatePoolNative();
-//     address endpointv2 = mainEngine.endpointV2();
+//     address from = KannonV1.stargatePoolNative();
+//     address endpointv2 = KannonV1.endpointV2();
 //     bytes32 guid = bytes32(0);
 //     uint256 amountLD = 100 ether; // Amount of ETH to be used for liquidity
 
@@ -99,7 +99,7 @@
 //     vm.deal(endpointv2, amountLD);
 //     vm.prank(endpointv2);
 //     vm.recordLogs();
-//     mainEngine.lzCompose{value: amountLD}(from, guid, message, executor, extraData);
+//     KannonV1.lzCompose{value: amountLD}(from, guid, message, executor, extraData);
 
 //     console.log("lzCompose executed, processing logs");
 //     Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -119,7 +119,7 @@
 //     assertEq(token.symbol(), symbol, "Token symbol mismatch");
 //     assertEq(token.totalSupply(), initialSupply, "Initial supply mismatch");
 
-//     console.log("Verifying token info in MainEngine");
+//     console.log("Verifying token info in KannonV1");
 //     (
 //         address creator,
 //         bool initialLiquidityAdded,
@@ -129,7 +129,7 @@
 //         uint256 creationTime,
 //         address poolAddress,
 //         uint128 liquidity
-//     ) = mainEngine.tokenInfo(tokenAddress);
+//     ) = KannonV1.tokenInfo(tokenAddress);
 
 //     console.log("Creator:", creator);
 //     console.log("Initial liquidity added:", initialLiquidityAdded);

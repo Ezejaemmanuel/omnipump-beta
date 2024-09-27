@@ -2,16 +2,16 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 // import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// contract MainEngineIntegrationTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1IntegrationTest is Test {
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public tokenAddress;
 //     address public intermediateTokenAddress;
@@ -36,11 +36,11 @@
 //             console.log("setUp - Created user", i + 1, "with address:", users[i]);
 //         }
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         (mainEngine,) = deployScript.run();
-//         console.log("setUp - MainEngine deployed at:", address(mainEngine));
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         (KannonV1,) = deployScript.run();
+//         console.log("setUp - KannonV1 deployed at:", address(KannonV1));
 
-//         assertTrue(address(mainEngine) != address(0), "MainEngine deployment failed");
+//         assertTrue(address(KannonV1) != address(0), "KannonV1 deployment failed");
 //         console.log("setUp - Setup completed");
 //     }
 
@@ -72,10 +72,10 @@
 
 //         vm.stopPrank();
 
-//         uint256 token1Balance = IERC20(token1).balanceOf(address(mainEngine));
-//         uint256 token2Balance = IERC20(token2).balanceOf(address(mainEngine));
-//         console.log("createTokensAndAddLiquidity - MainEngine token1 balance:", token1Balance);
-//         console.log("createTokensAndAddLiquidity - MainEngine token2 balance:", token2Balance);
+//         uint256 token1Balance = IERC20(token1).balanceOf(address(KannonV1));
+//         uint256 token2Balance = IERC20(token2).balanceOf(address(KannonV1));
+//         console.log("createTokensAndAddLiquidity - KannonV1 token1 balance:", token1Balance);
+//         console.log("createTokensAndAddLiquidity - KannonV1 token2 balance:", token2Balance);
 
 //         assertEq(token1Balance, INITIAL_TOKEN_AMOUNT, "Initial token1 balance incorrect");
 //         assertEq(token2Balance, INITIAL_TOKEN_AMOUNT, "Initial token2 balance incorrect");
@@ -106,7 +106,7 @@
 //         console.log("testcreateTokenAndAddLiquidity - Calling createTokenAndAddLiquidity");
 //         address tokenCreator = msg.sender;
 
-//         address tokenAddr = mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+//         address tokenAddr = KannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
 //             tokenCreator,
 //             name,
 //             symbol,
@@ -123,7 +123,7 @@
 
 //         assertTrue(tokenAddr != address(0), "Token creation failed");
 
-//         (, bool initialLiquidityAdded,,,,, address pool,) = mainEngine.tokenInfo(tokenAddr);
+//         (, bool initialLiquidityAdded,,,,, address pool,) = KannonV1.tokenInfo(tokenAddr);
 //         assertTrue(initialLiquidityAdded, "Initial liquidity not added");
 //         assertTrue(pool != address(0), "Pool not created");
 
@@ -152,7 +152,7 @@
 //             assertTrue(token1Amount > 0, "Failed to swap ETH for token1");
 
 //             // Swap token1 for ETH
-//             IERC20(tokenAddress).approve(address(mainEngine), token1Amount);
+//             IERC20(tokenAddress).approve(address(KannonV1), token1Amount);
 //             uint256 ethReceived = swapTokenForEth(tokenAddress, token1Amount);
 //             console.log("performSwaps - User swapped token1 for ETH");
 //             console.log("  Token1 amount:", token1Amount);
@@ -167,7 +167,7 @@
 //             assertTrue(token2Amount > 0, "Failed to swap ETH for token2");
 
 //             // Swap token2 back to ETH
-//             IERC20(intermediateTokenAddress).approve(address(mainEngine), token2Amount);
+//             IERC20(intermediateTokenAddress).approve(address(KannonV1), token2Amount);
 //             uint256 finalEthReceived = swapTokenForEth(intermediateTokenAddress, token2Amount);
 //             console.log("performSwaps - User swapped token2 for ETH");
 //             console.log("  Token2 amount:", token2Amount);
@@ -192,7 +192,7 @@
 //     function swapEthForToken(address tokenAddr, uint256 ethAmount) internal returns (uint256) {
 //         console.log("swapEthForToken - Swapping", ethAmount, "ETH for token:", tokenAddr);
 //         uint256 tokensBefore = IERC20(tokenAddr).balanceOf(msg.sender);
-//         mainEngine.swapExactETHForTokens{value: ethAmount}(tokenAddr);
+//         KannonV1.swapExactETHForTokens{value: ethAmount}(tokenAddr);
 //         uint256 tokensAfter = IERC20(tokenAddr).balanceOf(msg.sender);
 //         uint256 tokensReceived = tokensAfter - tokensBefore;
 //         console.log("swapEthForToken - Received", tokensReceived, "tokens");
@@ -205,7 +205,7 @@
 //         console.log("  Token Amount:", tokenAmount);
 //         console.log("  Token Address:", tokenAddr);
 //         uint256 ethBefore = msg.sender.balance;
-//         mainEngine.swapExactTokensForETH(tokenAddr, tokenAmount);
+//         KannonV1.swapExactTokensForETH(tokenAddr, tokenAmount);
 //         uint256 ethAfter = msg.sender.balance;
 //         uint256 ethReceived = ethAfter - ethBefore;
 //         console.log("swapTokenForEth - Received", ethReceived, "ETH");

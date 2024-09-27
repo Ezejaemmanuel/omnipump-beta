@@ -2,11 +2,11 @@
 // pragma solidity ^0.8.19;
 
 // import {Test} from "forge-std/Test.sol";
-// import {MainEngine} from "../../../src/solving-overflow-and-underflow-error.sol";
+// import {KannonV1} from "../../../src/solving-overflow-and-underflow-error.sol";
 // import {CustomToken} from "../../../src/customToken.sol";
 // import {Strings} from "lib/openzeppelin-contracts/contracts/utils/Strings.sol";
-// contract MainEngineHandler is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1Handler is Test {
+//     KannonV1 public KannonV1;
 //     address public user;
 //     address[] public createdTokens;
 
@@ -16,8 +16,8 @@
 //     uint256 constant MIN_INITIAL_SUPPLY = 1e18;  // 1 token (assuming 18 decimals)
 //     uint256 constant MAX_INITIAL_SUPPLY = 1e27;  // 1e9 tokens (1 billion)
 
-//     constructor(MainEngine _mainEngine, address _user) {
-//         mainEngine = _mainEngine;
+//     constructor(KannonV1 _KannonV1, address _user) {
+//         KannonV1 = _KannonV1;
 //         user = _user;
 //         vm.deal(user, 1e30); // Provide ample ETH for testing
 //     }
@@ -44,7 +44,7 @@
 //         vm.startPrank(user);
 
 //         // Call createTokenAndAddLiquidity
-//         address tokenAddress = mainEngine.createTokenAndAddLiquidity{value: ethAmount}(
+//         address tokenAddress = KannonV1.createTokenAndAddLiquidity{value: ethAmount}(
 //             user,
 //             name,
 //             symbol,

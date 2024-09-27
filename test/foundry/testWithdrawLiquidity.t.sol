@@ -2,8 +2,8 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -14,8 +14,8 @@
 // import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 // import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
-// contract MainEngineSwapTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1SwapTest is Test {
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public user;
 //     address public TOKEN_ADDRESS;
@@ -34,13 +34,13 @@
 //         vm.deal(deployer, 1000000000000 ether);
 //         vm.deal(user, 1000000000000 ether);
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
+//         DeployKannonV1 deployScript = new DeployKannonV1();
 
-//         (mainEngine,) = deployScript.run();
+//         (KannonV1,) = deployScript.run();
 
-//         WETH9 = mainEngine.WETH9();
+//         WETH9 = KannonV1.WETH9();
 
-//         quoterV2 = mainEngine.quoterV2();
+//         quoterV2 = KannonV1.quoterV2();
 //     }
 
 //     function createTokensAndAddLiquidity() internal returns (address) {
@@ -53,8 +53,8 @@
 
 //         vm.stopPrank();
 
-//         uint256 tokenBalance = IERC20(token).balanceOf(address(mainEngine));
-//         //console.log("createTokensAndAddLiquidity: MainEngine token balance:", tokenBalance);
+//         uint256 tokenBalance = IERC20(token).balanceOf(address(KannonV1));
+//         //console.log("createTokensAndAddLiquidity: KannonV1 token balance:", tokenBalance);
 
 //         //console.log("=== createTokensAndAddLiquidity: Token created and liquidity added ===");
 //         return token;
@@ -81,7 +81,7 @@
 
 //         address tokenCreator = msg.sender;
 
-//         address tokenAddr = mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+//         address tokenAddr = KannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
 //             tokenCreator,
 //             name,
 //             symbol,
@@ -95,7 +95,7 @@
 //         );
 //         assertTrue(tokenAddr != address(0), "Token creation failed");
 
-//         (, bool initialLiquidityAdded,,,,, address pool,) = mainEngine.tokenInfo(tokenAddr);
+//         (, bool initialLiquidityAdded,,,,, address pool,) = KannonV1.tokenInfo(tokenAddr);
 //         assertTrue(initialLiquidityAdded, "Initial liquidity not added");
 //         assertTrue(pool != address(0), "Pool not created");
 
@@ -106,8 +106,8 @@
 //         TOKEN_ADDRESS = createTokensAndAddLiquidity();
 
 //         vm.prank(deployer);
-//         vm.expectRevert(MainEngine.WithdrawalTooEarly.selector);
-//         mainEngine.withdrawLiquidity(TOKEN_ADDRESS, 1 ether);
+//         vm.expectRevert(KannonV1.WithdrawalTooEarly.selector);
+//         KannonV1.withdrawLiquidity(TOKEN_ADDRESS, 1 ether);
 //     }
 
 //     function testOnlyTokenCreatorCanWithdrawLiquidity() public {
@@ -115,32 +115,32 @@
 //         address tokenAddress = createTokensAndAddLiquidity();
 
 //         // Wait for the lock period to end
-//         vm.warp(block.timestamp + mainEngine.LIQUIDITY_LOCK_PERIOD() + 1);
+//         vm.warp(block.timestamp + KannonV1.LIQUIDITY_LOCK_PERIOD() + 1);
 
 //         // Try to withdraw liquidity as the token creator (should succeed)
 //         vm.prank(user);
-//         (,,,, uint256 withdrawableLiquidity,,,) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         (,,,, uint256 withdrawableLiquidity,,,) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 
 //         uint256 withdrawAmount = withdrawableLiquidity / 2;
-//         // mainEngine.withdrawLiquidity(tokenAddress, withdrawAmount);
+//         // KannonV1.withdrawLiquidity(tokenAddress, withdrawAmount);
 
 //         // Try to withdraw liquidity as a different address (should fail)
 //         address notCreator = address(0xdeadbeef);
-//         vm.expectRevert(MainEngine.NotAuthorized.selector);
+//         vm.expectRevert(KannonV1.NotAuthorized.selector);
 //         vm.prank(notCreator);
 
-//         mainEngine.withdrawLiquidity(tokenAddress, withdrawAmount);
+//         KannonV1.withdrawLiquidity(tokenAddress, withdrawAmount);
 //     }
 
 //     function testCannotWithdrawMoreThanAvailable() public {
 //         TOKEN_ADDRESS = createTokensAndAddLiquidity();
 
-//         vm.warp(block.timestamp + mainEngine.LIQUIDITY_LOCK_PERIOD() + 1);
+//         vm.warp(block.timestamp + KannonV1.LIQUIDITY_LOCK_PERIOD() + 1);
 
-//         (,,,, uint256 availableLiquidity,,,) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         (,,,, uint256 availableLiquidity,,,) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 //         vm.prank(deployer);
-//         vm.expectRevert(MainEngine.InsufficientWithdrawableLiquidity.selector);
-//         mainEngine.withdrawLiquidity(TOKEN_ADDRESS, availableLiquidity + 1);
+//         vm.expectRevert(KannonV1.InsufficientWithdrawableLiquidity.selector);
+//         KannonV1.withdrawLiquidity(TOKEN_ADDRESS, availableLiquidity + 1);
 //     }
 
 //     function testWithdrawLiquidity() public {
@@ -148,23 +148,23 @@
 
 //         performSwaps();
 
-//         vm.warp(block.timestamp + mainEngine.LIQUIDITY_LOCK_PERIOD() + 1);
+//         vm.warp(block.timestamp + KannonV1.LIQUIDITY_LOCK_PERIOD() + 1);
 
 //         logPoolState("Initial State", true);
 
-//         (uint160 sqrtPriceX96, int24 initialTick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 initialPrice = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 initialLiquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
-//         address pool = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         uint256 initialToken0Balance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         (uint160 sqrtPriceX96, int24 initialTick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 initialPrice = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 initialLiquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
+//         address pool = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         uint256 initialToken0Balance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 initialToken1Balance = IERC20(TOKEN_ADDRESS).balanceOf(pool);
 //         uint256 initialUserETHBalance = user.balance;
-//         uint256 initialUserTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 initialUserTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 
-//         (,,,, uint256 availableLiquidity,,,) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         (,,,, uint256 availableLiquidity,,,) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 //         uint256 withdrawAmount = availableLiquidity / 2;
 //         vm.prank(deployer);
-//         mainEngine.withdrawLiquidity(TOKEN_ADDRESS, withdrawAmount);
+//         KannonV1.withdrawLiquidity(TOKEN_ADDRESS, withdrawAmount);
 
 //         logPoolState("After Liquidity Withdrawal", false);
 //         logPoolStateChanges(
@@ -176,7 +176,7 @@
 //             initialUserETHBalance,
 //             initialUserTokenBalance
 //         );
-//         (,,,, uint256 withdrawableLiquidity,,, uint128 liquidity) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         (,,,, uint256 withdrawableLiquidity,,, uint128 liquidity) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 
 //         assertLt(withdrawableLiquidity, liquidity, "Withdrawable liquidity should decrease");
 //         assertGe(
@@ -186,7 +186,7 @@
 //         );
 //         // assertGt(user.balance, initialUserETHBalance, "User's ETH balance should increase");
 //         // assertGt(
-//         //     mainEngine.getTokenBalance(TOKEN_ADDRESS, user),
+//         //     KannonV1.getTokenBalance(TOKEN_ADDRESS, user),
 //         //     initialUserTokenBalance,
 //         //     "User's token balance should increase"
 //         // );
@@ -195,10 +195,10 @@
 //     function performSwaps() internal {
 //         vm.startPrank(user);
 //         for (uint256 i = 0; i < NUM_SWAPS; i++) {
-//             uint256 tokensReceived = mainEngine.swapExactETHForTokens{value: SWAP_AMOUNT}(TOKEN_ADDRESS);
+//             uint256 tokensReceived = KannonV1.swapExactETHForTokens{value: SWAP_AMOUNT}(TOKEN_ADDRESS);
 
-//             IERC20(TOKEN_ADDRESS).approve(address(mainEngine), tokensReceived * 10);
-//             uint256 ethReceived = mainEngine.swapExactTokensForETH(TOKEN_ADDRESS, tokensReceived);
+//             IERC20(TOKEN_ADDRESS).approve(address(KannonV1), tokensReceived * 10);
+//             uint256 ethReceived = KannonV1.swapExactTokensForETH(TOKEN_ADDRESS, tokensReceived);
 
 //             logSwapDetails(i + 1, SWAP_AMOUNT, tokensReceived, ethReceived);
 //         }
@@ -220,23 +220,23 @@
 //         console.log(state);
 //         console.log("--------------------");
 
-//         address poolLogAddr = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         (uint160 sqrtPriceX96, int24 tick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 price = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 liquidityLog = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
+//         address poolLogAddr = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         (uint160 sqrtPriceX96, int24 tick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 price = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 liquidityLog = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
 
 //         console.log("Format: [Current Value] (Previous Value)");
 //         console.log("Current Price: [%s] %s", price, isInitial ? "(Initial)" : "");
 //         console.log("Current Tick: [%s] %s", uint256(uint24(tick)), isInitial ? "(Initial)" : "");
 //         console.log("Pool Liquidity: [%s] %s", liquidityLog, isInitial ? "(Initial)" : "");
 
-//         uint256 token0Balance = IERC20(mainEngine.WETH9()).balanceOf(poolLogAddr);
+//         uint256 token0Balance = IERC20(KannonV1.WETH9()).balanceOf(poolLogAddr);
 //         uint256 token1Balance = IERC20(TOKEN_ADDRESS).balanceOf(poolLogAddr);
 //         console.log("WETH Balance in Pool: [%s] %s", token0Balance, isInitial ? "(Initial)" : "");
 //         console.log("Token Balance in Pool: [%s] %s", token1Balance, isInitial ? "(Initial)" : "");
 
 //         uint256 userETHBalance = user.balance;
-//         uint256 userTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 userTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 //         console.log("User ETH Balance: [%s] %s", userETHBalance, isInitial ? "(Initial)" : "");
 //         console.log("User Token Balance: [%s] %s", userTokenBalance, isInitial ? "(Initial)" : "");
 
@@ -249,7 +249,7 @@
 //             uint256 creationTime,
 //             address pool,
 //             uint128 liquidity
-//         ) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         ) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 
 //         console.log("TokenInfo:");
 //         console.log(" Creator: %s", creator);
@@ -275,27 +275,27 @@
 //         console.log("Pool State Changes");
 //         console.log("--------------------");
 
-//         address poolLogAddrState = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         (uint160 sqrtPriceX96, int24 currentTick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 currentPrice = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 currentLiquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
+//         address poolLogAddrState = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         (uint160 sqrtPriceX96, int24 currentTick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 currentPrice = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 currentLiquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
 
 //         console.log("Format: [Current Value] (Change)");
 //         logChange("Price", currentPrice, prevPrice);
 //         logChange("Tick", uint256(uint24(currentTick)), uint256(uint24(prevTick)));
 //         logChange("Pool Liquidity", uint256(currentLiquidity), uint256(prevLiquidity));
 
-//         uint256 currentToken0Balance = IERC20(mainEngine.WETH9()).balanceOf(poolLogAddrState);
+//         uint256 currentToken0Balance = IERC20(KannonV1.WETH9()).balanceOf(poolLogAddrState);
 //         uint256 currentToken1Balance = IERC20(TOKEN_ADDRESS).balanceOf(poolLogAddrState);
 //         logChange("WETH Balance in Pool", currentToken0Balance, prevToken0Balance);
 //         logChange("Token Balance in Pool", currentToken1Balance, prevToken1Balance);
 
 //         uint256 currentUserETHBalance = user.balance;
-//         uint256 currentUserTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 currentUserTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 //         logChange("User ETH Balance", currentUserETHBalance, prevUserETHBalance);
 //         logChange("User Token Balance", currentUserTokenBalance, prevUserTokenBalance);
 
-//         (,,,, uint256 withdrawableLiquidity,,, uint128 liquidity) = mainEngine.tokenInfo(TOKEN_ADDRESS);
+//         (,,,, uint256 withdrawableLiquidity,,, uint128 liquidity) = KannonV1.tokenInfo(TOKEN_ADDRESS);
 
 //         console.log("TokenInfo Changes:");
 //         logChange("Withdrawable Liquidity", withdrawableLiquidity, withdrawableLiquidity);

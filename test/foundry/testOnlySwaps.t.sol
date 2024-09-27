@@ -2,8 +2,8 @@
 // pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {MainEngine} from "../../src/mainEngine.sol";
-// import {DeployMainEngine} from "../../script/deployMainEngine.s.sol";
+// import {KannonV1} from "../../src/KannonV1.sol";
+// import {DeployKannonV1} from "../../script/deployKannonV1.s.sol";
 // import {CustomToken} from "../../src/customToken.sol";
 // import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
@@ -14,8 +14,8 @@
 // import {FullMath} from "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 // import {FixedPoint96} from "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
-// contract MainEngineSwapTest is Test {
-//     MainEngine public mainEngine;
+// contract KannonV1SwapTest is Test {
+//     KannonV1 public KannonV1;
 //     address public deployer;
 //     address public user;
 //     address public TOKEN_ADDRESS;
@@ -42,17 +42,17 @@
 //         //console.log("setUp: Funded deployer with 10,000,000,000,000,000 ETH");
 //         //console.log("setUp: Funded user with 100,000,000,000,000,000,000 ETH");
 
-//         DeployMainEngine deployScript = new DeployMainEngine();
-//         //console.log("setUp: Created DeployMainEngine instance at:", address(deployScript));
+//         DeployKannonV1 deployScript = new DeployKannonV1();
+//         //console.log("setUp: Created DeployKannonV1 instance at:", address(deployScript));
 
-//         (mainEngine,) = deployScript.run();
+//         (KannonV1,) = deployScript.run();
 
-//         //console.log("setUp: MainEngine deployed at:", address(mainEngine));
-//         //console.log("setUp: MainEngine factory address:", address(mainEngine.factory()));
-//         //console.log("setUp: MainEngine nonfungiblePositionManager address:", address(mainEngine.nonfungiblePositionManager()));
-//         //console.log("setUp: MainEngine swapRouter address:", address(mainEngine.swapRouter02()));
-//         //console.log("setUp: MainEngine WETH9 address:", mainEngine.WETH9());
-//         WETH9 = mainEngine.WETH9();
+//         //console.log("setUp: KannonV1 deployed at:", address(KannonV1));
+//         //console.log("setUp: KannonV1 factory address:", address(KannonV1.factory()));
+//         //console.log("setUp: KannonV1 nonfungiblePositionManager address:", address(KannonV1.nonfungiblePositionManager()));
+//         //console.log("setUp: KannonV1 swapRouter address:", address(KannonV1.swapRouter02()));
+//         //console.log("setUp: KannonV1 WETH9 address:", KannonV1.WETH9());
+//         WETH9 = KannonV1.WETH9();
 
 //         //console.log("setUp: Quoter address:", address(quoterV2));
 
@@ -153,8 +153,8 @@
 
 //         vm.stopPrank();
 
-//         uint256 tokenBalance = IERC20(token).balanceOf(address(mainEngine));
-//         //console.log("createTokensAndAddLiquidity: MainEngine token balance:", tokenBalance);
+//         uint256 tokenBalance = IERC20(token).balanceOf(address(KannonV1));
+//         //console.log("createTokensAndAddLiquidity: KannonV1 token balance:", tokenBalance);
 
 //         //console.log("=== createTokensAndAddLiquidity: Token created and liquidity added ===");
 //         return token;
@@ -180,7 +180,7 @@
 
 //         address tokenCreator = msg.sender;
 
-//         address tokenAddr = mainEngine.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
+//         address tokenAddr = KannonV1.createTokenAndAddLiquidity{value: ETH_AMOUNT}(
 //             tokenCreator,
 //             name,
 //             symbol,
@@ -195,7 +195,7 @@
 
 //         assertTrue(tokenAddr != address(0), "Token creation failed");
 
-//         (, bool initialLiquidityAdded,,,,, address pool,) = mainEngine.tokenInfo(tokenAddr);
+//         (, bool initialLiquidityAdded,,,,, address pool,) = KannonV1.tokenInfo(tokenAddr);
 //         assertTrue(initialLiquidityAdded, "Initial liquidity not added");
 //         assertTrue(pool != address(0), "Pool not created");
 
@@ -208,28 +208,28 @@
 //         vm.startPrank(user);
 
 //         uint256 initialETHBalance = user.balance;
-//         uint256 initialWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(user);
-//         uint256 initialMainEngineWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(address(mainEngine));
-//         uint256 initialPoolWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(mainEngine.getPoolAddress(TOKEN_ADDRESS));
+//         uint256 initialWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(user);
+//         uint256 initialKannonV1WETHBalance = IERC20(KannonV1.WETH9()).balanceOf(address(KannonV1));
+//         uint256 initialPoolWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(KannonV1.getPoolAddress(TOKEN_ADDRESS));
 //         uint256 initialGas = gasleft();
 
-//         IERC20(mainEngine.WETH9()).approve(address(mainEngine), SWAP_AMOUNT);
+//         IERC20(KannonV1.WETH9()).approve(address(KannonV1), SWAP_AMOUNT);
 
 //         // Log initial state
 //         logPoolState("Initial State", true);
 
-//         uint256 initialTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 initialTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 
 //         // Store initial values for comparison
-//         (uint160 sqrtPriceX96, int24 initialTick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 initialPrice = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 initialLiquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
-//         address pool = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         uint256 initialToken0Balance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         (uint160 sqrtPriceX96, int24 initialTick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 initialPrice = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 initialLiquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
+//         address pool = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         uint256 initialToken0Balance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 initialToken1Balance = IERC20(TOKEN_ADDRESS).balanceOf(pool);
 
 //         // Swap ETH for Tokens
-//         uint256 tokensReceived = mainEngine.swapExactETHForTokens{value: SWAP_AMOUNT}(TOKEN_ADDRESS);
+//         uint256 tokensReceived = KannonV1.swapExactETHForTokens{value: SWAP_AMOUNT}(TOKEN_ADDRESS);
 
 //         // Log state after first swap
 //         logPoolState("After ETH to Token Swap", false);
@@ -246,10 +246,10 @@
 //         console.log("Tokens received by user:", tokensReceived);
 
 //         uint256 postSwapETHBalance = user.balance;
-//         uint256 postSwapTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, address(mainEngine));
-//         uint256 postSwapWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(user);
-//         uint256 postSwapMainEngineWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(address(mainEngine));
-//         uint256 postSwapPoolWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         uint256 postSwapTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, address(KannonV1));
+//         uint256 postSwapWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(user);
+//         uint256 postSwapKannonV1WETHBalance = IERC20(KannonV1.WETH9()).balanceOf(address(KannonV1));
+//         uint256 postSwapPoolWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 gasUsedFirstSwap = initialGas - gasleft();
 
 //         assertLt(postSwapETHBalance, initialETHBalance, "ETH balance should decrease");
@@ -260,33 +260,33 @@
 //             "First Swap",
 //             initialWETHBalance,
 //             postSwapWETHBalance,
-//             initialMainEngineWETHBalance,
-//             postSwapMainEngineWETHBalance,
+//             initialKannonV1WETHBalance,
+//             postSwapKannonV1WETHBalance,
 //             initialPoolWETHBalance,
 //             postSwapPoolWETHBalance,
 //             gasUsedFirstSwap
 //         );
 
-//         // IERC20(TOKEN_ADDRESS).approve(address(mainEngine), 10000 ether);
+//         // IERC20(TOKEN_ADDRESS).approve(address(KannonV1), 10000 ether);
 
 //         // Store values before second swap
 //         int24 preTick;
-//         (sqrtPriceX96, preTick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 prePrice = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 preLiquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
-//         uint256 preToken0Balance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         (sqrtPriceX96, preTick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 prePrice = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 preLiquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
+//         uint256 preToken0Balance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 preToken1Balance = IERC20(TOKEN_ADDRESS).balanceOf(pool);
 //         uint256 preUserETHBalance = user.balance;
-//         uint256 preUserTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
-//         uint256 preUserWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(user);
-//         uint256 preMainEngineWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(address(mainEngine));
-//         uint256 prePoolWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         uint256 preUserTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 preUserWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(user);
+//         uint256 preKannonV1WETHBalance = IERC20(KannonV1.WETH9()).balanceOf(address(KannonV1));
+//         uint256 prePoolWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 preGas = gasleft();
 
-//         IERC20(TOKEN_ADDRESS).approve(address(mainEngine), 1 ether);
+//         IERC20(TOKEN_ADDRESS).approve(address(KannonV1), 1 ether);
 
 //         // Swap Tokens back to ETH
-//         uint256 ethReceived = mainEngine.swapExactTokensForETH(TOKEN_ADDRESS, 1 ether,0);
+//         uint256 ethReceived = KannonV1.swapExactTokensForETH(TOKEN_ADDRESS, 1 ether,0);
 
 //         // Log state after second swap
 //         logPoolState("After Token to ETH Swap", false);
@@ -297,10 +297,10 @@
 //         console.log("ETH received by user :", ethReceived);
 
 //         uint256 finalETHBalance = user.balance;
-//         uint256 finalTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
-//         uint256 finalWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(user);
-//         uint256 finalMainEngineWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(address(mainEngine));
-//         uint256 finalPoolWETHBalance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         uint256 finalTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 finalWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(user);
+//         uint256 finalKannonV1WETHBalance = IERC20(KannonV1.WETH9()).balanceOf(address(KannonV1));
+//         uint256 finalPoolWETHBalance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 gasUsedSecondSwap = preGas - gasleft();
 
 //         assertGt(finalETHBalance, postSwapETHBalance, "ETH balance should increase");
@@ -316,8 +316,8 @@
 //             "Second Swap",
 //             preUserWETHBalance,
 //             finalWETHBalance,
-//             preMainEngineWETHBalance,
-//             finalMainEngineWETHBalance,
+//             preKannonV1WETHBalance,
+//             finalKannonV1WETHBalance,
 //             prePoolWETHBalance,
 //             finalPoolWETHBalance,
 //             gasUsedSecondSwap
@@ -330,21 +330,21 @@
 //         console.log("--------------------");
 //         console.log(state);
 //         console.log("--------------------");
-//         address pool = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         (uint160 sqrtPriceX96, int24 tick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 price = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 liquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
+//         address pool = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         (uint160 sqrtPriceX96, int24 tick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 price = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 liquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
 //         console.log("Format: [Current Value] (Previous Value)");
 //         console.log("Current Price: [%s] %s", price, isInitial ? "(Initial)" : "");
 //         console.log("Current Tick: [%s] %s", uint256(uint24(tick)), isInitial ? "(Initial)" : "");
 //         console.log("Pool Liquidity: [%s] %s", liquidity, isInitial ? "(Initial)" : "");
-//         uint256 token0Balance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         uint256 token0Balance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 token1Balance = IERC20(TOKEN_ADDRESS).balanceOf(pool);
 //         console.log("WETH Balance in Pool: [%s] %s", token0Balance, isInitial ? "(Initial)" : "");
 //         console.log("Token Balance in Pool: [%s] %s", token1Balance, isInitial ? "(Initial)" : "");
 //         // Log user balances
 //         uint256 userETHBalance = user.balance;
-//         uint256 userTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 userTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 //         console.log("User ETH Balance: [%s] %s", userETHBalance, isInitial ? "(Initial)" : "");
 //         console.log("User Token Balance: [%s] %s", userTokenBalance, isInitial ? "(Initial)" : "");
 //     }
@@ -361,10 +361,10 @@
 //         console.log("--------------------");
 //         console.log("Pool State Changes");
 //         console.log("--------------------");
-//         address pool = mainEngine.getPoolAddress(TOKEN_ADDRESS);
-//         (uint160 sqrtPriceX96, int24 currentTick) = mainEngine.getPoolSlot0(TOKEN_ADDRESS);
-//         uint256 currentPrice = mainEngine.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
-//         uint128 currentLiquidity = mainEngine.getPoolLiquidity(TOKEN_ADDRESS);
+//         address pool = KannonV1.getPoolAddress(TOKEN_ADDRESS);
+//         (uint160 sqrtPriceX96, int24 currentTick) = KannonV1.getPoolSlot0(TOKEN_ADDRESS);
+//         uint256 currentPrice = KannonV1.calculatePriceFromSqrtPriceX96(sqrtPriceX96, TOKEN_ADDRESS);
+//         uint128 currentLiquidity = KannonV1.getPoolLiquidity(TOKEN_ADDRESS);
 //         console.log("Format: [Current Value] (Change)");
 //         if (currentPrice >= prevPrice) {
 //             console.log("Price: [%s] (+%s)", currentPrice, currentPrice - prevPrice);
@@ -383,7 +383,7 @@
 //         } else {
 //             console.log("Pool Liquidity: [%s] (-%s)", currentLiquidity, prevLiquidity - currentLiquidity);
 //         }
-//         uint256 currentToken0Balance = IERC20(mainEngine.WETH9()).balanceOf(pool);
+//         uint256 currentToken0Balance = IERC20(KannonV1.WETH9()).balanceOf(pool);
 //         uint256 currentToken1Balance = IERC20(TOKEN_ADDRESS).balanceOf(pool);
 //         if (currentToken0Balance >= prevToken0Balance) {
 //             console.log(
@@ -405,7 +405,7 @@
 //         }
 //         // Log user balance changes
 //         uint256 currentUserETHBalance = user.balance;
-//         uint256 currentUserTokenBalance = mainEngine.getTokenBalance(TOKEN_ADDRESS, user);
+//         uint256 currentUserTokenBalance = KannonV1.getTokenBalance(TOKEN_ADDRESS, user);
 //         if (currentUserETHBalance >= prevUserETHBalance) {
 //             console.log(
 //                 "User ETH Balance: [%s] (+%s)", currentUserETHBalance, currentUserETHBalance - prevUserETHBalance
@@ -434,8 +434,8 @@
 //         string memory swapType,
 //         uint256 preUserWETHBalance,
 //         uint256 postUserWETHBalance,
-//         uint256 preMainEngineWETHBalance,
-//         uint256 postMainEngineWETHBalance,
+//         uint256 preKannonV1WETHBalance,
+//         uint256 postKannonV1WETHBalance,
 //         uint256 prePoolWETHBalance,
 //         uint256 postPoolWETHBalance,
 //         uint256 gasUsed
@@ -452,17 +452,17 @@
 //             console.log("User WETH Balance: [%s] (-%s)", postUserWETHBalance, preUserWETHBalance - postUserWETHBalance);
 //         }
 
-//         if (postMainEngineWETHBalance >= preMainEngineWETHBalance) {
+//         if (postKannonV1WETHBalance >= preKannonV1WETHBalance) {
 //             console.log(
-//                 "MainEngine WETH Balance: [%s] (+%s)",
-//                 postMainEngineWETHBalance,
-//                 postMainEngineWETHBalance - preMainEngineWETHBalance
+//                 "KannonV1 WETH Balance: [%s] (+%s)",
+//                 postKannonV1WETHBalance,
+//                 postKannonV1WETHBalance - preKannonV1WETHBalance
 //             );
 //         } else {
 //             console.log(
-//                 "MainEngine WETH Balance: [%s] (-%s)",
-//                 postMainEngineWETHBalance,
-//                 preMainEngineWETHBalance - postMainEngineWETHBalance
+//                 "KannonV1 WETH Balance: [%s] (-%s)",
+//                 postKannonV1WETHBalance,
+//                 preKannonV1WETHBalance - postKannonV1WETHBalance
 //             );
 //         }
 

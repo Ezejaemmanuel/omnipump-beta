@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 
-library MainEngineLibrary {
+library KannonV1Library {
     uint256 constant PRECISION = 1e14;
     uint256 constant PRECISION_2 = 1e11;
     int24 constant TICK_SPACING = 60;
@@ -112,10 +112,10 @@ library MainEngineLibrary {
         // Calculate the price ratio
         uint256 priceRatio = (amount1 * PRECISION) / amount0;
 
-        uint256 sqrtPrice = MainEngineLibrary.sqrt(priceRatio);
+        uint256 sqrtPrice = KannonV1Library.sqrt(priceRatio);
 
         uint256 q = 2 ** 96;
-        uint160 sqrtPriceX96 = uint160((sqrtPrice * q) / MainEngineLibrary.sqrt(PRECISION));
+        uint160 sqrtPriceX96 = uint160((sqrtPrice * q) / KannonV1Library.sqrt(PRECISION));
         if (sqrtPriceX96 < TickMath.MIN_SQRT_RATIO || sqrtPriceX96 > TickMath.MAX_SQRT_RATIO) {
             revert SqrtPriceOutOfBounds();
         }

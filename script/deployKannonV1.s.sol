@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 // import {MainEngine} from "../src/solving-overflow-and-underflow-error.sol";
-import {MainEngine} from "../src/mainEngine.sol";
+import {KannonV1} from "../src/kannon_v1.sol";
 
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
@@ -12,7 +12,7 @@ import {ISwapRouter02} from "@uniswap/v3-swap-routers/contracts/interfaces/ISwap
 
 import {IWETH9} from "../test/mocks/IWETH.sol";
 
-contract DeployMainEngine is Script {
+contract DeployKannonV1 is Script {
     struct DeploymentInfo {
         address factory;
         address nonfungiblePositionManager;
@@ -25,7 +25,7 @@ contract DeployMainEngine is Script {
 
     DeploymentInfo public info;
 
-    function run() external returns (MainEngine, DeploymentInfo memory) {
+    function run() external returns (KannonV1, DeploymentInfo memory) {
         info.chainId = block.chainid;
         console.log("Chain ID:", info.chainId);
 
@@ -50,7 +50,7 @@ contract DeployMainEngine is Script {
         setAddressesFromEnv();
         vm.startBroadcast(deployerPrivateKey);
 
-        MainEngine mainEngine = new MainEngine(
+        KannonV1 mainEngine = new KannonV1(
             IUniswapV3Factory(info.factory),
             INonfungiblePositionManager(info.nonfungiblePositionManager),
             ISwapRouter02(info.swapRouter02),
