@@ -118,7 +118,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     error InvalidParameters();
     error LiquidityError();
     error InsufficientFundsForCrossMessage();
-
+    error WETH9Failed();
     constructor(
         IUniswapV3Factory _factory,
         INonfungiblePositionManager _nonfungiblePositionManager,
@@ -505,18 +505,19 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         return amountOut;
     }
-error WETH9Failed();
+
+
+
     function _wrapETH(uint256 amount) internal {
-        try IWETH9(WETH9).deposit{value: amount}() {
-        } catch {
+        try IWETH9(WETH9).deposit{value: amount}() {}
+        catch {
             revert WETH9Failed();
         }
     }
 
     function _unwrapETH(uint256 amount) internal {
-        try IWETH9(WETH9).withdraw(amount){
-
-        }catch{
+        try IWETH9(WETH9).withdraw(amount) {}
+        catch {
             revert WETH9Failed();
         }
     }
