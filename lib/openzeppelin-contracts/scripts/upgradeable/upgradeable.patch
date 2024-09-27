@@ -96,7 +96,7 @@ index 549891e3f..a6b24078e 100644
  
 @@ -54,10 +57,11 @@ Once installed, you can use the contracts in the library by importing them:
  ```solidity
- pragma solidity ^0.8.25;
+ pragma solidity ^0.8.19;
  
 -import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 +import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -144,7 +144,7 @@ index 644f6f531..ab8ba05ff 100644
 --- a/contracts/utils/cryptography/EIP712.sol
 +++ b/contracts/utils/cryptography/EIP712.sol
 @@ -4,7 +4,6 @@
- pragma solidity ^0.8.25;
+ pragma solidity ^0.8.19;
  
  import {MessageHashUtils} from "./MessageHashUtils.sol";
 -import {ShortStrings, ShortString} from "../ShortStrings.sol";

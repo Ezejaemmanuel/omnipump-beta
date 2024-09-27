@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 import {ERC721URIStorage} from "../../token/ERC721/extensions/ERC721URIStorage.sol";
 

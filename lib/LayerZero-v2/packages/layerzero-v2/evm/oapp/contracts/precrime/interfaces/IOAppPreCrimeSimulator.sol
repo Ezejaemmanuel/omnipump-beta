@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 // @dev Import the Origin so it's exposed to OAppPreCrimeSimulator implementers.
 // solhint-disable-next-line no-unused-import

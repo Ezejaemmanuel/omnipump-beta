@@ -43,7 +43,7 @@ snapshot :; forge snapshot
 format :; forge fmt
 
 anvil :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 12
-anvil-arbitrum-sepolia :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1 --fork-url $(ARBITRUM_SEPOLIA_RPC_URL) --chain-id 421614 --host 0.0.0.0
+anvil-arbitrum-sepolia :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1 --fork-url $(ARBITRUM_SEPOLIA_RPC_URL) --chain-id 421614 --host 0.0.0.0 
 anvil-sepolia :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1 --fork-url $(SEPOLIA_RPC_URL) --chain-id 11155111 --host 0.0.0.0 
 anvil-optimism-sepolia :; anvil -m 'test test test test test test test test test test test junk' --steps-tracing --block-time 1 --fork-url $(OPTIMISM_SEPOLIA_RPC_URL) --chain-id 11155420 --host 0.0.0.0
 
@@ -52,7 +52,7 @@ deploy-anvil:
 	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY) --broadcast
 
 deploy-arbitrum-sepolia:
-	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv
+	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv --use solc:0.8.19
 
 deploy-sepolia:
 	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
@@ -60,6 +60,9 @@ deploy-sepolia:
 deploy-optimism-sepolia:
 	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(OPTIMISM_ETHERSCAN_API_KEY) -vvvv
 
+
+build-19:
+	@forge build --use solc:0.8.19
 # Test commands
 test-anvil:
 	@forge test

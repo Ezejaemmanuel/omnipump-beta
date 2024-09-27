@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.0) (utils/Create2.sol)
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 /**
  * @dev Helper to make usage of the `CREATE2` EVM opcode easier and safer.

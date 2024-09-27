@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.1) (utils/Multicall.sol)
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 import {Address} from "./Address.sol";
 import {Context} from "./Context.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 library AddressCast {
     function toBytes32(address _address) internal pure returns (bytes32 result) {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 import {CustomToken} from "./customToken.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
@@ -16,23 +16,20 @@ import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {IWETH9} from "../test/mocks/IWETH.sol";
 import {IV3SwapRouter} from "lib/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 
-
 import {ILayerZeroComposer} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroComposer.sol";
 
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
 import {MessagingFee, OFTReceipt, SendParam} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/interfaces/IOFT.sol";
-import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IStargate} from "lib/stargate-v2/packages/stg-evm-v2/src/interfaces/IStargate.sol";
+import {MainEngineLibrary} from "./mainEngineLibrary.sol";
 
 contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     uint256 public constant LIQUIDITY_LOCK_PERIOD = 3 days;
     uint24 public constant poolFee = 3000; // 0.3%
     int24 constant TICK_SPACING = 60;
-    uint256 public immutable MIN_SEND_AMOUNT = 1e17;
-    uint256 public immutable MIN_CREATE_AMOUNT = 1e15;
-    uint256 constant PRECISION = 1e8;
+    uint256 public immutable MIN_AMOUNT = 1e15;
 
     using OptionsBuilder for bytes;
 
@@ -66,6 +63,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
     event AdditionalTokenData(
         address indexed tokenAddress,
+        address indexed creator,
         string name,
         string symbol,
         string description,
@@ -85,7 +83,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 ethReserve,
         uint256 tokenReserve,
         uint256 totalSupply,
-
         uint256 lockedLiquidityPercentage,
         uint256 withdrawableLiquidity,
         uint256 liquidatedLiquidity,
@@ -94,7 +91,11 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
     enum TradeType {
         Buy,
-        Sell
+        Sell,
+        FailedCrossChainBuy
+    }
+    enum FailType {
+        CrossChainBuy
     }
 
     event TokenTrade(
@@ -103,31 +104,20 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         TradeType tradeType,
         uint256 inputAmount,
         uint256 outputAmount,
+        uint32 eid,
         uint256 timestamp
     );
 
-    error InsufficientETHSent();
-    error TokenNotCreated();
-    error NotAuthorized();
-    error ZeroAmount();
-    error InvalidTransactionType();
-    error PoolAlreadyExists();
-    error PoolDoesNotExist();
-    error InsufficientETHProvided();
-    error MustSendETH();
-    error InitialLiquidityAlreadyAdded();
-    error InvalidInitialSupply();
-    error InvalidLockedLiquidityPercentage();
-    error InsufficientWithdrawableLiquidity();
-    error WithdrawalTooEarly();
-    error MustProvideBothAmounts();
-    error InvalidTokenOrder();
-    error SqrtPriceOutOfBounds();
-    error NoLiquidityMinted();
-    error InvalidToken();
-    error TransferEthFailed();
-    error InvalidDestinationChain();
-    error InsufficientEthOrAmountToLowFromSwap();
+    error InsufficientFunds();
+    error Unauthorized();
+    error InvalidInput();
+    error InvalidOperation();
+    error TimingConstraint();
+    error CalculationError();
+    error TransferFailed();
+    error InvalidParameters();
+    error LiquidityError();
+    error InsufficientFundsForCrossMessage();
 
     constructor(
         IUniswapV3Factory _factory,
@@ -146,7 +136,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     }
 
     modifier onlyTokenCreator(address tokenAddress) {
-        if (msg.sender != tokenInfo[tokenAddress].creator) revert NotAuthorized();
+        if (msg.sender != tokenInfo[tokenAddress].creator) revert Unauthorized();
         _;
     }
 
@@ -190,89 +180,95 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 lockedLiquidityPercentage,
         uint256 ethAmount
     ) internal returns (address tokenAddress) {
-        if (ethAmount == 0) {
-            revert InsufficientETHSent();
+        //TODO CHANGE TO 0.005
+        if (ethAmount < MIN_AMOUNT) {
+            revert InsufficientFunds();
         }
+        //TODO ADD UP TO RATIO IF STATEMNT
         // Wrap the ETH to WETH9
         _wrapETH(ethAmount);
 
-        if (initialSupply == 0) {
-            revert InvalidInitialSupply();
+        if (initialSupply == 0 || lockedLiquidityPercentage > 100) {
+            revert InvalidInput();
         }
-
-        if (lockedLiquidityPercentage > 100) {
-            revert InvalidLockedLiquidityPercentage();
-        }
-
         tokenAddress = _createToken(name, symbol, description, imageUrl, twitter, telegram, website, initialSupply);
 
-        tokenInfo[tokenAddress].lockedLiquidityPercentage = lockedLiquidityPercentage;
-        tokenInfo[tokenAddress].creationTime = block.timestamp;
+        tokenInfo[tokenAddress] = TokenInfo({
+            creator: tokenCreator,
+            initialLiquidityAdded: false,
+            positionId: 0,
+            lockedLiquidityPercentage: lockedLiquidityPercentage,
+            withdrawableLiquidity: 0,
+            creationTime: block.timestamp,
+            pool: address(0),
+            liquidity: 0
+        });
 
         _setupPool(tokenAddress, ethAmount);
 
-        (uint160 sqrtPriceX96, int24 tick) = getPoolSlot0(tokenAddress);
-        uint256 currentPrice = calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress);
+        (uint160 sqrtPriceX96, int24 tick) = MainEngineLibrary.getPoolSlot0(tokenInfo[tokenAddress].pool);
+        uint256 currentPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
 
-        (int24 lower, int24 upper) = calculateTickRange(tick, currentPrice);
+        (int24 lower, int24 upper) = MainEngineLibrary.calculateTickRange(tick, currentPrice);
 
-        _addInitialLiquidity(tokenAddress, initialSupply, ethAmount, lower, upper, initialSupply, ethAmount);
+        _addInitialLiquidity(tokenAddress, initialSupply, ethAmount, lower, upper);
 
         emit AdditionalTokenData(
-            tokenAddress, name, symbol, description, imageUrl, twitter, telegram, website, block.timestamp
+            tokenAddress, tokenCreator, name, symbol, description, imageUrl, twitter, telegram, website, block.timestamp
         );
         _emitTokenUpdate(tokenAddress);
         return tokenAddress;
     }
 
-    function lzCompose(
-        address _from,
-        bytes32 _guid,
-        bytes calldata _message,
-        address _executor,
-        bytes calldata _extraData
-    ) external payable {
-        if (_from != stargatePoolNative || msg.sender != endpointV2) {
-            revert NotAuthorized();
+    function _lzComposeCreateTokenAndAddLiquidity(
+        address tokenCreator,
+        string memory name,
+        string memory symbol,
+        string memory description,
+        string memory imageUrl,
+        string memory twitter,
+        string memory telegram,
+        string memory website,
+        uint256 initialSupply,
+        uint256 lockedLiquidityPercentage,
+        uint256 ethAmount
+    ) internal returns (address tokenAddress) {
+        if (ethAmount < MIN_AMOUNT) {
+            revert InsufficientFunds();
         }
-        uint256 amountLD = OFTComposeMsgCodec.amountLD(_message);
-        bytes memory _composeMessage = OFTComposeMsgCodec.composeMsg(_message);
+        // Wrap the ETH to WETH9
+        _wrapETH(ethAmount);
 
-        (bytes1 transactionType, bytes memory data) = abi.decode(_composeMessage, (bytes1, bytes));
-
-        if (transactionType == 0x00) {
-            (
-                address tokenCreator,
-                string memory name,
-                string memory symbol,
-                string memory description,
-                string memory imageUrl,
-                string memory twitter,
-                string memory telegram,
-                string memory website,
-                uint256 initialSupply,
-                uint256 lockedLiquidityPercentage
-            ) = abi.decode(data, (address, string, string, string, string, string, string, string, uint256, uint256));
-
-            address tokenAddress = _createTokenAndAddLiquidity(
-                tokenCreator,
-                name,
-                symbol,
-                description,
-                imageUrl,
-                twitter,
-                telegram,
-                website,
-                initialSupply,
-                lockedLiquidityPercentage,
-                amountLD
-            );
-        } else if (transactionType == 0x01) {
-            (address tokenAddress, address recipient) = abi.decode(data, (address, address));
-            _swapExactETHForTokens(tokenAddress, amountLD, recipient);
-        } else {
-            revert InvalidTransactionType();
+        if (initialSupply == 0 || lockedLiquidityPercentage > 100) {
+            revert InvalidInput();
         }
+        tokenAddress = _createToken(name, symbol, description, imageUrl, twitter, telegram, website, initialSupply);
+
+        tokenInfo[tokenAddress] = TokenInfo({
+            creator: tokenCreator,
+            initialLiquidityAdded: false,
+            positionId: 0,
+            lockedLiquidityPercentage: lockedLiquidityPercentage,
+            withdrawableLiquidity: 0,
+            creationTime: block.timestamp,
+            pool: address(0),
+            liquidity: 0
+        });
+
+        _setupPool(tokenAddress, ethAmount);
+
+        (uint160 sqrtPriceX96, int24 tick) = MainEngineLibrary.getPoolSlot0(tokenInfo[tokenAddress].pool);
+        uint256 currentPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
+
+        (int24 lower, int24 upper) = MainEngineLibrary.calculateTickRange(tick, currentPrice);
+
+        _addInitialLiquidity(tokenAddress, initialSupply, ethAmount, lower, upper);
+
+        emit AdditionalTokenData(
+            tokenAddress, tokenCreator, name, symbol, description, imageUrl, twitter, telegram, website, block.timestamp
+        );
+        _emitTokenUpdate(tokenAddress);
+        return tokenAddress;
     }
 
     function _createToken(
@@ -297,31 +293,16 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             )
         );
 
-        tokenInfo[tokenAddress] = TokenInfo({
-            creator: msg.sender,
-            initialLiquidityAdded: false,
-            positionId: 0,
-            lockedLiquidityPercentage: 0,
-            withdrawableLiquidity: 0,
-            creationTime: block.timestamp,
-            pool: address(0),
-            liquidity: 0
-        });
-
         return tokenAddress;
-    }
-
-    function _wrapETH(uint256 amount) internal {
-        IWETH9(WETH9).deposit{value: amount}();
     }
 
     function _setupPool(address tokenAddress, uint256 ethAmount) internal {
         if (tokenInfo[tokenAddress].pool != address(0)) {
-            revert PoolAlreadyExists();
+            revert();
         }
 
         // Order tokens
-        (address token0, address token1) = orderTokens(tokenAddress);
+        (address token0, address token1) = MainEngineLibrary.orderTokens(tokenAddress, WETH9);
 
         // Create pool
         address pool = factory.createPool(token0, token1, poolFee);
@@ -329,89 +310,38 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         // Get token balances
         uint256 tokenAmount = IERC20Metadata(tokenAddress).balanceOf(address(this));
-        uint256 wethAmount = ethAmount; // Assuming ethAmount is in Wei
-
-        // Get token decimals
-        uint8 decimals0 = IERC20Metadata(token0).decimals();
-        uint8 decimals1 = IERC20Metadata(token1).decimals();
 
         // Calculate the initial sqrtPriceX96
-        uint160 sqrtPriceX96 = calculateInitialSqrtPrice(
+        uint160 sqrtPriceX96 = MainEngineLibrary.calculateInitialSqrtPrice(
             token0,
             token1,
-            token0 == tokenAddress ? tokenAmount : wethAmount,
-            token1 == tokenAddress ? tokenAmount : wethAmount,
-            decimals0,
-            decimals1
+            token0 == tokenAddress ? tokenAmount : ethAmount,
+            token1 == tokenAddress ? tokenAmount : ethAmount
         );
 
         // Initialize the pool with the calculated price
         IUniswapV3Pool(pool).initialize(sqrtPriceX96);
     }
 
-    function calculateInitialSqrtPrice(
-        address token0,
-        address token1,
-        uint256 amount0,
-        uint256 amount1,
-        uint8 decimals0,
-        uint8 decimals1
-    ) public view returns (uint160) {
-        if (token0 >= token1) {
-            revert InvalidTokenOrder();
-        }
-        if (amount0 == 0 || amount1 == 0) {
-            revert ZeroAmount();
-        }
-
-        // Calculate the price ratio
-        uint256 priceRatio = (amount1 * PRECISION) / amount0;
-
-     
-        uint256 sqrtPrice = sqrt(priceRatio);
-
-        uint256 q = 2 ** 96;
-        uint160 sqrtPriceX96 = uint160((sqrtPrice * q) / sqrt(PRECISION));
-        if (sqrtPriceX96 < TickMath.MIN_SQRT_RATIO || sqrtPriceX96 > TickMath.MAX_SQRT_RATIO) {
-            revert SqrtPriceOutOfBounds();
-        }
-        return sqrtPriceX96;
-    }
-
-    function sqrt(uint256 x) public view returns (uint256 y) {
-        uint256 z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
-    }
-
-    /// @notice Internal function to add initial liquidity
-    /// @param tokenAddress The address of the token to add liquidity for
-    /// @param tokenAmount The amount of tokens to add as liquidity
-    /// @param ethAmount The amount of ETH to add as liquidity
-
     function _addInitialLiquidity(
         address tokenAddress,
         uint256 tokenAmount,
         uint256 ethAmount,
         int24 tickLower,
-        int24 tickUpper,
-        uint256 amount0Desired,
-        uint256 amount1Desired
+        int24 tickUpper
     ) internal {
         if (tokenInfo[tokenAddress].initialLiquidityAdded) {
-            revert InitialLiquidityAlreadyAdded();
+            revert InvalidOperation();
         }
         if (tokenAmount == 0 || ethAmount == 0) {
-            revert ZeroAmount();
+            revert InvalidInput();
         }
 
-        (address token0, address token1) = orderTokens(tokenAddress);
-
-        TransferHelper.safeApprove(token0, address(nonfungiblePositionManager), amount0Desired);
-        TransferHelper.safeApprove(token1, address(nonfungiblePositionManager), amount1Desired);
+        (address token0, address token1) = MainEngineLibrary.orderTokens(tokenAddress, WETH9);
+        uint256 amount0 = (token0 == tokenAddress) ? tokenAmount : ethAmount;
+        uint256 amount1 = (token1 == tokenAddress) ? tokenAmount : ethAmount;
+        TransferHelper.safeApprove(token0, address(nonfungiblePositionManager), amount0);
+        TransferHelper.safeApprove(token1, address(nonfungiblePositionManager), amount1);
 
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: token0,
@@ -419,18 +349,18 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             fee: poolFee,
             tickLower: tickLower,
             tickUpper: tickUpper,
-            amount0Desired: amount0Desired,
-            amount1Desired: amount1Desired,
+            amount0Desired: amount0,
+            amount1Desired: amount1,
             amount0Min: 0,
             amount1Min: 0,
             recipient: address(this),
             deadline: block.timestamp
         });
 
-        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = nonfungiblePositionManager.mint(params);
+        (uint256 tokenId, uint128 liquidity,,) = nonfungiblePositionManager.mint(params);
 
         if (liquidity <= 0) {
-            revert NoLiquidityMinted();
+            revert LiquidityError();
         }
 
         tokenInfo[tokenAddress].positionId = tokenId;
@@ -441,13 +371,159 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         deposits[tokenId] = Deposit({owner: msg.sender, liquidity: liquidity, token0: token0, token1: token1});
     }
-    /// @notice Withdraws liquidity from a token position
-    /// @param tokenAddress The address of the token to withdraw liquidity from
-    /// @param amount The amount of liquidity to withdraw
+
+    function lzCompose(
+        address _from,
+        bytes32, /*_guid*/
+        bytes calldata _message,
+        address, /*_executor*/
+        bytes calldata /*_extraData*/
+    ) external payable {
+        if (_from != stargatePoolNative || msg.sender != endpointV2) {
+            revert Unauthorized();
+        }
+        uint256 amountLD = OFTComposeMsgCodec.amountLD(_message);
+        uint32 srcEid = OFTComposeMsgCodec.srcEid(_message);
+        bytes memory _composeMessage = OFTComposeMsgCodec.composeMsg(_message);
+
+        (bytes1 transactionType, bytes memory data) = abi.decode(_composeMessage, (bytes1, bytes));
+
+        if (transactionType == 0x00) {
+            (
+                address tokenCreator,
+                string memory name,
+                string memory symbol,
+                string memory description,
+                string memory imageUrl,
+                string memory twitter,
+                string memory telegram,
+                string memory website,
+                uint256 initialSupply,
+                uint256 lockedLiquidityPercentage
+            ) = abi.decode(data, (address, string, string, string, string, string, string, string, uint256, uint256));
+
+            address tokenAddress = _lzComposeCreateTokenAndAddLiquidity(
+                tokenCreator,
+                name,
+                symbol,
+                description,
+                imageUrl,
+                twitter,
+                telegram,
+                website,
+                initialSupply,
+                lockedLiquidityPercentage,
+                amountLD
+            );
+        } else if (transactionType == 0x01) {
+            (address tokenAddress, address recipient) = abi.decode(data, (address, address));
+            _lzComposeSwapExactETHForTokens(tokenAddress, amountLD, recipient, srcEid);
+        } else if (transactionType == 0x02) {
+            (address tokenAddress, uint256 tokenAmount, address recipient) =
+                abi.decode(data, (address, uint256, address));
+
+            // Emit TokenTrade event
+            emit TokenTrade(tokenAddress, recipient, TradeType.Buy, amountLD, tokenAmount, srcEid, block.timestamp);
+
+            // Update token-related data
+            _emitTokenUpdate(tokenAddress);
+        } else {
+            revert InvalidInput();
+        }
+    }
+
+    function _lzComposeSwapExactETHForTokens(address _tokenAddress, uint256 _amount, address _recipient, uint32 _srcEid)
+        internal
+        returns (uint256 amountOut)
+    {
+        if (_amount == 0) revert InsufficientFunds();
+
+        // Wrap the ETH to WETH9
+        _wrapETH(_amount);
+
+        // Approve the swap router to spend WETH9
+        TransferHelper.safeApprove(WETH9, address(swapRouter02), _amount);
+
+        // Set up swap parameters
+        IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
+            tokenIn: WETH9,
+            tokenOut: _tokenAddress,
+            fee: poolFee,
+            recipient: _recipient,
+            amountIn: _amount,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        // Attempt the swap with try-catch
+        try swapRouter02.exactInputSingle(params) returns (uint256 out) {
+            amountOut = out;
+            emit TokenTrade(_tokenAddress, _recipient, TradeType.Buy, _amount, amountOut, _srcEid, block.timestamp);
+
+            // Update token-related data
+            _emitTokenUpdate(_tokenAddress);
+        } catch {
+            // If the swap fails, unwrap WETH back to ETH
+            _unwrapETH(_amount);
+
+            // Use Stargate to send ETH back to the user on the source chain
+            bytes32 to = OFTComposeMsgCodec.addressToBytes32(_recipient);
+
+            SendParam memory sendParam = SendParam({
+                dstEid: _srcEid,
+                to: to,
+                amountLD: _amount,
+                minAmountLD: 0, // 0.5% slippage tolerance
+                extraOptions: "",
+                composeMsg: "", // No compose message
+                oftCmd: ""
+            });
+
+            MessagingFee memory messagingFee = IStargate(stargatePoolNative).quoteSend(sendParam, false);
+
+            if (_amount <= messagingFee.nativeFee) {
+                (bool success,) = _recipient.call{value: _amount}("");
+                if (!success) {
+                    revert TransferFailed();
+                }
+                emit TokenTrade(
+                    _tokenAddress, _recipient, TradeType.FailedCrossChainBuy, _amount, 0, 0, block.timestamp
+                );
+            }
+
+            uint256 amountToSend = _amount - messagingFee.nativeFee;
+            sendParam.amountLD = amountToSend;
+
+            IStargate(stargatePoolNative).sendToken{value: _amount}(sendParam, messagingFee, _recipient);
+
+            emit TokenTrade(
+                _tokenAddress, _recipient, TradeType.FailedCrossChainBuy, _amount, 0, _srcEid, block.timestamp
+            );
+        }
+
+        // Emit trade event upon successful swap
+
+        return amountOut;
+    }
+error WETH9Failed();
+    function _wrapETH(uint256 amount) internal {
+        try IWETH9(WETH9).deposit{value: amount}() {
+        } catch {
+            revert WETH9Failed();
+        }
+    }
+
+    function _unwrapETH(uint256 amount) internal {
+        try IWETH9(WETH9).withdraw(amount){
+
+        }catch{
+            revert WETH9Failed();
+        }
+    }
 
     function withdrawLiquidity(address tokenAddress, uint256 amount) external onlyTokenCreator(tokenAddress) {
-        if (block.timestamp < tokenInfo[tokenAddress].creationTime + LIQUIDITY_LOCK_PERIOD) revert WithdrawalTooEarly();
-        if (amount > tokenInfo[tokenAddress].withdrawableLiquidity) revert InsufficientWithdrawableLiquidity();
+        if (block.timestamp < tokenInfo[tokenAddress].creationTime + LIQUIDITY_LOCK_PERIOD) revert TimingConstraint();
+        if (amount > tokenInfo[tokenAddress].withdrawableLiquidity) revert InsufficientFunds();
 
         tokenInfo[tokenAddress].withdrawableLiquidity -= amount;
 
@@ -470,12 +546,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         });
 
         nonfungiblePositionManager.collect(collectParams);
-    }
-
-
-
-    function addressToBytes32(address _addr) internal view returns (bytes32) {
-        return bytes32(uint256(uint160(_addr)));
     }
 
     function swapExactTokensForETH(address tokenAddress, uint256 tokenAmount, uint32 dstEid)
@@ -505,11 +575,11 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             // Transfer ETH directly to the user on the current chain
             (bool success,) = msg.sender.call{value: amountOut}("");
             if (!success) {
-                revert TransferEthFailed();
+                revert TransferFailed();
             }
             // Get price after trade
 
-            emit TokenTrade(tokenAddress, msg.sender, TradeType.Sell, tokenAmount, amountOut, block.timestamp);
+            emit TokenTrade(tokenAddress, msg.sender, TradeType.Sell, tokenAmount, amountOut, 0, block.timestamp);
             _emitTokenUpdate(tokenAddress);
         }
 
@@ -524,13 +594,13 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint256 tokenAmount
     ) internal {
         if (dstEid == 0) {
-            revert InvalidDestinationChain();
+            revert InvalidParameters();
         }
         if (amount == 0) {
-            revert ZeroAmount();
+            revert InvalidInput();
         }
 
-        bytes32 to = addressToBytes32(recipient);
+        bytes32 to = OFTComposeMsgCodec.addressToBytes32(recipient);
 
         bytes memory composeMsg = abi.encode(bytes1(0x02), abi.encode(tokenAddress, tokenAmount, recipient));
 
@@ -540,7 +610,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             dstEid: dstEid,
             to: to,
             amountLD: amount,
-            minAmountLD: amount * 800 / 1000, // Example: 0.5% slippage tolerance
+            minAmountLD: amount * 300 / 1000, // Example: 0.5% slippage tolerance
             extraOptions: extraOptions,
             composeMsg: composeMsg,
             oftCmd: ""
@@ -548,88 +618,41 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         MessagingFee memory messagingFee = IStargate(stargatePoolNative).quoteSend(sendParam, false);
 
-        uint256 amountToSend = amount - messagingFee.nativeFee;
         // Combined check for insufficient ETH and minimum send amount
-        if (amount <= messagingFee.nativeFee || amountToSend < MIN_SEND_AMOUNT) {
-            revert InsufficientEthOrAmountToLowFromSwap();
+        if (amount <= messagingFee.nativeFee) {
+            revert InsufficientFundsForCrossMessage();
         }
-        sendParam.amountLD = amountToSend;
-        sendParam.minAmountLD = amountToSend * 800 / 1000; // Adjust slippage tolerance
+        if (amount - messagingFee.nativeFee < MIN_AMOUNT) {
+            revert InsufficientFundsForCrossMessage();
+        }
+        sendParam.amountLD = amount - messagingFee.nativeFee;
 
         IStargate(stargatePoolNative).sendToken{value: amount}(sendParam, messagingFee, recipient);
-
-        emit TokenTrade(tokenAddress, msg.sender, TradeType.Sell, tokenAmount, amountToSend, block.timestamp);
-        _emitTokenUpdate(tokenAddress);
     }
 
     function swapExactETHForTokens(address tokenAddress) external payable returns (uint256) {
-        if (msg.value == 0) revert MustSendETH();
-        _swapExactETHForTokens(tokenAddress, msg.value, msg.sender);
-    }
-
-    function getCurrentPrice(address tokenAddress) public view returns (uint256) {
-        (uint160 sqrtPriceX96, int24 tick) = getPoolSlot0(tokenAddress);
-        uint256 currentPrice = calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress);
-        return currentPrice;
-    }
-
-    function _swapExactETHForTokens(address tokenAddress, uint256 amount, address recipient)
-        internal
-        returns (uint256)
-    {
-        if (amount == 0) revert MustSendETH();
+        if (msg.value == 0) revert InsufficientFunds();
         // Get price before trade
-        _wrapETH(amount);
+        _wrapETH(msg.value);
 
-        TransferHelper.safeApprove(WETH9, address(swapRouter02), amount);
+        TransferHelper.safeApprove(WETH9, address(swapRouter02), msg.value);
 
         IV3SwapRouter.ExactInputSingleParams memory params = IV3SwapRouter.ExactInputSingleParams({
             tokenIn: WETH9,
             tokenOut: tokenAddress,
             fee: poolFee,
-            recipient: recipient,
-            amountIn: amount,
+            recipient: msg.sender,
+            amountIn: msg.value,
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0
         });
 
         uint256 amountOut = swapRouter02.exactInputSingle(params);
         // Get price after trade
-        emit TokenTrade(tokenAddress, recipient, TradeType.Buy, amount, amountOut, block.timestamp);
+        emit TokenTrade(tokenAddress, msg.sender, TradeType.Buy, msg.value, amountOut, 0, block.timestamp);
         _emitTokenUpdate(tokenAddress);
 
         return amountOut;
-    }
-
-    /// @notice Transfers funds to owner of NFT
-    /// @param tokenId The id of the erc721
-    /// @param amount0 The amount of token0
-    /// @param amount1 The amount of token1
-    function _sendToOwner(uint256 tokenId, uint256 amount0, uint256 amount1) internal {
-        // Get owner of contract
-        address owner = deposits[tokenId].owner;
-
-        address token0 = deposits[tokenId].token0;
-        address token1 = deposits[tokenId].token1;
-        // Send collected fees to owner
-        TransferHelper.safeTransfer(token0, owner, amount0);
-        TransferHelper.safeTransfer(token1, owner, amount1);
-    }
-
-    function getPoolReserves(address tokenAddress) public view returns (uint256 tokenReserve, uint256 ethReserve) {
-        address pool = tokenInfo[tokenAddress].pool;
-        (address token0, address token1) = orderTokens(tokenAddress);
-
-        uint256 balance0 = IERC20Metadata(token0).balanceOf(pool);
-        uint256 balance1 = IERC20Metadata(token1).balanceOf(pool);
-
-        if (token0 == tokenAddress) {
-            tokenReserve = balance0;
-            ethReserve = balance1;
-        } else {
-            tokenReserve = balance1;
-            ethReserve = balance0;
-        }
     }
 
     function _emitTokenUpdate(address tokenAddress) internal {
@@ -638,12 +661,13 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         uint128 liquidity = IUniswapV3Pool(pool).liquidity();
 
-        (uint256 tokenReserve, uint256 ethReserve) = getPoolReserves(tokenAddress);
+        (uint256 tokenReserve, uint256 ethReserve) =
+            MainEngineLibrary.getPoolReserves(tokenAddress, WETH9, tokenInfo[tokenAddress].pool);
 
         uint256 totalSupply = IERC20Metadata(tokenAddress).totalSupply();
         uint256 liquidatedLiquidity = tokenInfo[tokenAddress].liquidity - tokenInfo[tokenAddress].withdrawableLiquidity;
         address creator = tokenInfo[tokenAddress].creator;
-       uint256 tokenPrice =  calculatePriceFromSqrtPriceX96(sqrtPriceX96,tokenAddress);
+        uint256 tokenPrice = MainEngineLibrary.calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress, WETH9);
         emit TokenUpdate(
             tokenAddress,
             creator,
@@ -666,79 +690,8 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         override
         returns (bytes4)
     {
-       
         return this.onERC721Received.selector;
-    }
-  
-
-   
-
-    function orderTokens(address tokenAddress) public view returns (address token0, address token1) {
-        if (tokenAddress < WETH9) {
-            token0 = tokenAddress;
-            token1 = WETH9;
-        } else {
-            token0 = WETH9;
-            token1 = tokenAddress;
-        }
     }
 
     receive() external payable {}
-
-  
-
-    function getPoolLiquidity(address tokenAddress) public view returns (uint128) {
-        return tokenInfo[tokenAddress].liquidity;
-    }
-
-    function getTokenBalance(address tokenAddress, address account) public view returns (uint256) {
-        return IERC20Metadata(tokenAddress).balanceOf(account);
-    }
-
-    function getPoolSlot0(address tokenAddress) public view returns (uint160, int24) {
-        address pool = tokenInfo[tokenAddress].pool;
-        uint160 sqrtPriceX96;
-        int24 tick;
-        (sqrtPriceX96, tick,,,,,) = IUniswapV3Pool(pool).slot0();
-        return (sqrtPriceX96, tick);
-    }
-
-    function calculateTickRange(int24 currentTick, uint256 currentPrice)
-        public
-        view
-        returns (int24 tickLower, int24 tickUpper)
-    {
-        // Define a range around the current price (e.g., ±10%)
-        uint256 priceRange = (currentPrice * 10) / 100;
-
-        // Calculate tick range based on price range
-        int24 tickRange = int24(int256((priceRange * uint256(int256(TICK_SPACING))) / currentPrice)) * 1000;
-        tickLower = ((currentTick - tickRange) / TICK_SPACING) * TICK_SPACING;
-        tickUpper = ((currentTick + tickRange) / TICK_SPACING) * TICK_SPACING;
-
-        // Calculate and log the tick range
-        int24 tickDifference = tickUpper - tickLower;
-
-        return (tickLower, tickUpper);
-    }
-
-
-    function calculatePriceFromSqrtPriceX96(uint160 sqrtPriceX96, address tokenAddress) public view returns (uint256) {
-        if (tokenAddress == WETH9) {
-            revert InvalidToken();
-        }
-
-        (address token0, address token1) = orderTokens(tokenAddress);
-        uint256 q = 2 ** 96;
-        uint256 price = (uint256(sqrtPriceX96) * uint256(sqrtPriceX96) * PRECISION) / (q * q);
-
-        // price is now in token1/token0 terms
-        if (token1 == WETH9) {
-            // If WETH is token1, return price as is (WETH per token)
-            return price;
-        } else {
-            // If WETH is token0, we need to return the reciprocal
-            return (PRECISION * PRECISION) / price;
-        }
-    }
 }

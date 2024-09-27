@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LZBL-1.2
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 library CalldataBytesLib {
     function toU8(bytes calldata _bytes, uint256 _start) internal pure returns (uint8) {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LZBL-1.2
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import { IMessagingContext } from "./interfaces/IMessagingContext.sol";
 import { Errors } from "./libs/Errors.sol";

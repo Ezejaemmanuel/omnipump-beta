@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 /**
  * @dev Implementation contract with a payable changeAdmin(address) function made to clash with

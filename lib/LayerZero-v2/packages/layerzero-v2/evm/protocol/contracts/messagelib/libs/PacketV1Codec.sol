@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LZBL-1.2
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import { Packet } from "../../interfaces/ISendLib.sol";
 import { AddressCast } from "../../libs/AddressCast.sol";

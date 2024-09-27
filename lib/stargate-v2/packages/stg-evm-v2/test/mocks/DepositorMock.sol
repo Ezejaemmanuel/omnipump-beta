@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import { IStargateStaking, IERC20 } from "../../src/peripheral/rewarder/interfaces/IStargateStaking.sol";
 

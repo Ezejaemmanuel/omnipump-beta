@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import { AddressCast } from "../../../../src/libs/AddressCast.sol";
 import { BusPassenger } from "../../../../src/libs/BusCodec.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.0) (interfaces/IERC777Recipient.sol)
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 /**
  * @dev Interface of the ERC777TokensRecipient standard as defined in the EIP.

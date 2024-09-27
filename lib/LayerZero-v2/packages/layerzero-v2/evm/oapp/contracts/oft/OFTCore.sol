@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import { OApp, Origin } from "../oapp/OApp.sol";
 import { OAppOptionsType3 } from "../oapp/libs/OAppOptionsType3.sol";

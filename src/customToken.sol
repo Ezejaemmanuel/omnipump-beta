@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.19;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -32,9 +32,9 @@ contract CustomToken is ERC20, Ownable {
         string memory twitter,
         string memory telegram,
         string memory website,
-        address creator,
+        address mainEngine,
         uint256 initialSupply
-    ) ERC20(name, symbol) Ownable(creator) {
+    ) ERC20(name, symbol) Ownable(mainEngine) {
         _tokenInfo = TokenInfo({
             name: name,
             symbol: symbol,
@@ -43,61 +43,13 @@ contract CustomToken is ERC20, Ownable {
             twitter: twitter,
             telegram: telegram,
             website: website,
-            mainEngineAddress: creator,
+            mainEngineAddress: mainEngine,
             mintingDisabled: true,
             creator: msg.sender
         });
 
-        _mint(creator, initialSupply);
+        _mint(mainEngine, initialSupply);
     }
 
-    /// @notice Returns all token information
-    function getTokenInfo() public view returns (TokenInfo memory) {
-        return _tokenInfo;
-    }
-
-    /// @notice Returns the name of the token
-    function getName() public view returns (string memory) {
-        return _tokenInfo.name;
-    }
-
-    /// @notice Returns the symbol of the token
-    function getSymbol() public view returns (string memory) {
-        return _tokenInfo.symbol;
-    }
-
-    /// @notice Returns the description of the token
-    function getDescription() public view returns (string memory) {
-        return _tokenInfo.description;
-    }
-
-    /// @notice Returns the image URL of the token
-    function getImageUrl() public view returns (string memory) {
-        return _tokenInfo.imageUrl;
-    }
-
-    /// @notice Returns the Twitter URL of the token
-    function getTwitter() public view returns (string memory) {
-        return _tokenInfo.twitter;
-    }
-
-    /// @notice Returns the Telegram URL of the token
-    function getTelegram() public view returns (string memory) {
-        return _tokenInfo.telegram;
-    }
-
-    /// @notice Returns the website URL of the token
-    function getWebsite() public view returns (string memory) {
-        return _tokenInfo.website;
-    }
-
-    /// @notice Returns the main engine address
-    function getMainEngineAddress() public view returns (address) {
-        return _tokenInfo.mainEngineAddress;
-    }
-
-    /// @notice Checks if minting is disabled
-    function isMintingDisabled() public view returns (bool) {
-        return _tokenInfo.mintingDisabled;
-    }
+  
 }
