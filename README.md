@@ -1,146 +1,33 @@
 # <h1 align="center"> Hardhat Foundry Template </h1>
 
-Highly opinionated template for smart contract development.
+### THESE ARE THE ADDRESSES THAT YOU NEED TO RUN THE CONTRACT ONCHAIN AND THEN USING THE SCRIPTS INTHE MAKE FILE TO RUN IT ..... AND THEN YOU CAN GET YOUR RPC-URL AND ETHERSCAN API KEY FROM YOUR OWN PLACE 
+```
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
-Combines hardhat and foundry testing frameworks to take advantage of coverage and fuzzing capabiltiies, along with their native tools.
+SEPOLIA_NONFUNGIBLE_POSITION_MANAGER=0x1238536071E1c677A632429e3655c799b22cDA52
+SEPOLIA_SWAP_ROUTER=0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E
+SEPOLIA_QUOTER_ADDRESS=0xEd1f6473345F45b75F8179591dd5bA1888cf2FB3
+SEPOLIA_TOKEN_DESCRIPTOR=0x5bE4DAa6982C69aD20A57F1e68cBcA3D37de6207
+SEPOLIA_WETH9=0xfff9976782d46cc05630d1f6ebab18b2324d6b14
+SEPOLIA_TEST_WALLET=0x553199572773F818170afF2e523Dc5Ef8B4D9512
 
-## Getting Started
 
-### Requirements
 
-The following will need to be installed. Please follow the links and instructions.
+ARBITRUM_SEPOLIA_UNISWAP_V3_FACTORY=0x248AB79Bbb9bC29bB72f7Cd42F17e054Fc40188e
+ARBITRUM_SEPOLIA_NONFUNGIBLE_POSITION_MANAGER=0x6b2937Bde17889EDCf8fbD8dE31C3C2a70Bc4d65
+ARBITRUM_SEPOLIA_SWAP_ROUTER=0x101F443B4d1b059569D643917553c771E1b9663E
+ARBITRUM_SEPOLIA_WETH9=0x980B62Da83eFf3D4576C647993b0c1D7faf17c73
+ARBITRUM_SEPOLIA_STARGATE_ENDPOINT_V2=0x6EDCE65403992e310A62460808c4b910D972f10f
+ARBITRUM_SEPOLIA_STARGATE_POOL_NATIVE=0x6fddB6270F6c71f31B62AE0260cfa8E2e2d186E0
 
-- [Foundry](https://github.com/foundry-rs/foundry)
-- Node >= 14
-- yarn or npm >= 7
+OPTIMISM_SEPOLIA_UNISWAP_V3_FACTORY=0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
+OPTIMISM_SEPOLIA_NONFUNGIBLE_POSITION_MANAGER=0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2
+OPTIMISM_SEPOLIA_SWAP_ROUTER=0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4
+OPTIMISM_SEPOLIA_WETH9=0x4200000000000000000000000000000000000006
+OPTIMISM_SEPOLIA_STARGATE_ENDPOINT_V2=0x6EDCE65403992e310A62460808c4b910D972f10f
+OPTIMISM_SEPOLIA_STARGATE_POOL_NATIVE=0xa31dCc5C71E25146b598bADA33E303627D7fC97e
 
-### Quickstart
-
-1. Install dependencies
-
-Once you've cloned and entered into your repository, you need to install the necessary dependencies. In order to do so, simply run:
-
-```shell
-yarn install
-forge install
 ```
 
-2. Build
+## 
 
-```bash
-forge build
-```
-
-3. Test
-
-```bash
-forge test -vvv
-# or
-npx hardhat test
-```
-
-For more information on how to use Foundry, check out the [Foundry Github Repository](https://github.com/foundry-rs/foundry/tree/master/forge) or type `forge help` in your terminal.
-
-## Features
-
-### GitHub Templates
-
-The template comes with a list of templates:
-
-- [feature](.github/ISSUE_TEMPLATE/feature.md)
-- [bug](.github/ISSUE_TEMPLATE/bug.md)
-- [pull request](.github/pull_request_template.md)
-
-### GitHub Actions
-
-- [CI](.github/workflows/ci.yml)
-
-  - Lint
-  - Test
-  - Coverage
-    - Show coverage report in the workflow summary
-    - Set `secrets.CODECOV_TOKEN` on GitHub for visualizing coverage report to [codecov.io](https://about.codecov.io/product/features/) (NOTE: the secrets is not required for public repo)
-
-- [Static Analyzer](.github/workflows/slither.yml) ([Slither](https://github.com/crytic/slither))
-  - To enable the upload of the SARIF file to GitHub, Requires to be public repo or GitHub Enterprise Cloud user.
-
-### Install Libraries
-
-- Install libraries with Foundry which work with Hardhat.
-
-```bash
-forge install openzeppelin/openzeppelin-contracts # just an example
-```
-
-And then update remappings in `foundry.toml`.
-
-```
-remappings = [
-    "@openzeppelin/=lib/openzeppelin-contracts/",
-]
-```
-
-This will allow you to import libraries like this:
-
-```solidity
-// Instead of import "lib/openzeppelin-contracts/token/ERC20/ERC20.sol";
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-```
-
-### Generate documentation
-
-- Generates and builds an mdbook from Solidity source files.
-
-```bash
-forge doc # generates docs in ./docs
-forge doc --serve # generates docs and serves them on localhost:3000
-```
-
-### Update Gas Snapshots
-
-```sh
-forge snapshot
-```
-
-### Coverage
-
-```sh
-forge coverage
-```
-
-### Custom Tasks
-
-- Use Hardhat's task framework
-
-```bash
-npx hardhat example
-```
-
-### Utility Commands
-
-- Use `cast` command which is a swiss army knife for smart contract development. Type `cast --help` for more information.
-
-#### Tracing a tx
-
-Runs a published transaction in a local environment and prints the trace.
-
-```bash
-cast run <txhash> --rpc-url <rpc-url>
-```
-
-### Deplyment
-
-See [deployment](./deployment.md)
-
-## Resources
-
-For more infomation on how to use Foundry features, refer to:
-
-- [forge-std](https://github.com/foundry-rs/forge-std/)
-- [cheat codes](https://github.com/foundry-rs/foundry/blob/master/forge/README.md#cheat-codes)
-- [Foundry book](https://book.getfoundry.sh/)
-
-### Acknowledgements
-
-- [OpenSea/Seaport](https://github.com/ProjectOpenSea/seaport)
-- [Primitive Finance/hardhat-foundry](https://github.com/primitivefinance/hardhat-foundry)
