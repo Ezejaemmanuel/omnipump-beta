@@ -1,0 +1,26 @@
+coverage
+coverage.json
+typechain-types
+yarn-error.log
+
+#Hardhat files
+artifacts/
+hh-cache/
+
+# Foundry
+cache
+out
+.env/
+
+.DS_Store
+
+# VScode
+.vscode
+!vscode/*.code-snippets
+!.vscode/solidity.json
+
+# log
+*.log
+node_modules
+yes.txt
+.env.local
