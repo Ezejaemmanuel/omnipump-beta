@@ -23,9 +23,12 @@
 [submodule "lib/stargate-v2"]
 	path = lib/stargate-v2
 	url = https://github.com/stargate-protocol/stargate-v2
+# [submodule "lib/LayerZero-v2"]
+# 	path = lib/LayerZero-v2
+# 	url = https://github.com/LayerZero-Labs/LayerZero-v2
+# [submodule "lib/solidity-bytes-utils"]
+# 	path = lib/solidity-bytes-utils
+# 	url = https://github.com/layerzero-labs/solidity-bytes-utils
 [submodule "lib/LayerZero-v2"]
 	path = lib/LayerZero-v2
 	url = https://github.com/LayerZero-Labs/LayerZero-v2
-[submodule "lib/solidity-bytes-utils"]
-	path = lib/solidity-bytes-utils
-	url = https://github.com/layerzero-labs/solidity-bytes-utils
