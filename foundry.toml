@@ -1,7 +1,7 @@
 [profile.default]
 libs = ["lib"]
 optimizer = true
-optimizer_runs = 1000
+optimizer_runs = 100
 out = "out"
 remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
@@ -10,7 +10,10 @@ remappings = [
   "@prb/math/=lib/prb-math/",
   "@uniswap/v3-swap-routers=lib/swap-router-contracts",
   "@layerzerolabs/lz-evm-protocol-v2=lib/LayerZero-v2/packages/layerzero-v2/evm/protocol",
-  "@layerzerolabs/lz-evm-oapp-v2=lib/LayerZero-v2/packages/layerzero-v2/evm/oapp"
+  "@layerzerolabs/lz-evm-oapp-v2=lib/LayerZero-v2/packages/layerzero-v2/evm/oapp",
+  "@layerzerolabs/lz-evm-messagelib-v2=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib",
+  "hardhat-deploy/=node_modules/hardhat-deploy/",
+  "@layerzerolabs/lz-evm-v1-0.7/=node_modules/@layerzerolabs/lz-evm-v1-0.7/"
 ]
 src = "src"
 via_ir = true

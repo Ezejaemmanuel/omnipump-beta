@@ -49,16 +49,40 @@ anvil-optimism-sepolia :; anvil -m 'test test test test test test test test test
 
 # Deployment commands
 deploy-anvil:
-	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY) --broadcast
+	@forge script script/deployKannonV1.s.sol:DeployKannonV1 --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY) --broadcast
 
 deploy-arbitrum-sepolia:
-	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv --use solc:0.8.19
+	@forge script script/deployKannonV1.s.sol:DeployKannonV1 --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv --use solc:0.8.19
 
 deploy-sepolia:
-	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+	@forge script script/deployKannonV1.s.sol:DeployKannonV1 --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
 deploy-optimism-sepolia:
-	@forge script script/deployMainEngine.s.sol:DeployMainEngine --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(OPTIMISM_ETHERSCAN_API_KEY) -vvvv
+	@forge script script/deployKannonV1.s.sol:DeployKannonV1 --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(OPTIMISM_ETHERSCAN_API_KEY) -vvvv
+
+deploy-all:
+	@echo "Deploying to Sepolia..."
+	@forge script script/deployAndSetPeers.s.sol:DeployKannonV1CrossChainSender --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv --use solc:0.8.19
+	@echo "Deploying to Optimism Sepolia..."
+	@forge script script/deployAndSetPeers.s.sol:DeployKannonV1CrossChainSender --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(OPTIMISM_ETHERSCAN_API_KEY) -vvvv --use solc:0.8.19
+	@echo "Setting peers on Arbitrum Sepolia..."
+	@forge script script/deployAndSetPeers.s.sol:DeployKannonV1CrossChainSender --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv --use solc:0.8.19
+
+deploy-contracts:
+    @echo "Deploying to arbitrum sepolia"
+	@forge script script/DeployKannonV1CrossChainSender.s.sol:DeployKannonV1CrossChainSender --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ARBISCAN_API_KEY) -vvvv --use solc:0.8.19
+	@echo "Deploying KannonV1CrossChainSender to Sepolia..."
+	@forge script script/DeployKannonV1CrossChainSender.s.sol:DeployKannonV1CrossChainSender --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv --use solc:0.8.19
+	@echo "Deploying KannonV1CrossChainSender to Optimism Sepolia..."
+	@forge script script/DeployKannonV1CrossChainSender.s.sol:DeployKannonV1CrossChainSender --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(OPTIMISM_ETHERSCAN_API_KEY) -vvvv --use solc:0.8.19
+
+set-peers:
+	@echo "Setting peers on Arbitrum Sepolia..."
+	@forge script script/SetPeers.s.sol:SetPeers --rpc-url $(ARBITRUM_SEPOLIA_RPC_URL) --private-key $(ARBITRUM_SEPOLIA_PRIVATE_KEY) --broadcast -vvvv --use solc:0.8.19
+	@echo "Setting peers on Sepolia..."
+	@forge script script/SetPeers.s.sol:SetPeers --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast -vvvv --use solc:0.8.19
+	@echo "Setting peers on Optimism Sepolia..."
+	@forge script script/SetPeers.s.sol:SetPeers --rpc-url $(OPTIMISM_SEPOLIA_RPC_URL) --private-key $(OPTIMISM_SEPOLIA_PRIVATE_KEY) --broadcast -vvvv --use solc:0.8.19
 
 
 build-19:

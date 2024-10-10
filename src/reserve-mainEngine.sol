@@ -106,7 +106,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         uint32 eid,
         uint256 timestamp
     );
-  
+
     error InsufficientETHSent();
     error TokenNotCreated();
     error NotAuthorized();
@@ -332,8 +332,8 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
                     revert TransferEthFailed();
                 }
                 emit TokenTrade(
-                _tokenAddress, _recipient, TradeType.FailedCrossChainBuy, _amount, 0, 0, block.timestamp
-            );
+                    _tokenAddress, _recipient, TradeType.FailedCrossChainBuy, _amount, 0, 0, block.timestamp
+                );
             }
 
             uint256 amountToSend = _amount - messagingFee.nativeFee;
@@ -350,8 +350,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         return amountOut;
     }
-
- 
 
     function _createToken(
         string memory name,
@@ -450,8 +448,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         return sqrtPriceX96;
     }
 
- 
-
     function _addInitialLiquidity(
         address tokenAddress,
         uint256 tokenAmount,
@@ -528,8 +524,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
 
         nonfungiblePositionManager.collect(collectParams);
     }
-
-  
 
     function swapExactTokensForETH(address tokenAddress, uint256 tokenAmount, uint32 dstEid)
         external
@@ -643,8 +637,6 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
         return amountOut;
     }
 
-
-
     function _emitTokenUpdate(address tokenAddress) internal {
         address pool = tokenInfo[tokenAddress].pool;
         (uint160 sqrtPriceX96,,,,,,) = IUniswapV3Pool(pool).slot0();
@@ -681,8 +673,8 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
     {
         return this.onERC721Received.selector;
     }
-    receive() external payable {}
 
+    receive() external payable {}
 
     function orderTokens(address tokenAddress) public view returns (address token0, address token1) {
         if (tokenAddress < WETH9) {
@@ -693,13 +685,14 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             token1 = tokenAddress;
         }
     }
+
     function getCurrentPrice(address tokenAddress) public view returns (uint256) {
         (uint160 sqrtPriceX96,) = getPoolSlot0(tokenAddress);
         uint256 currentPrice = calculatePriceFromSqrtPriceX96(sqrtPriceX96, tokenAddress);
         return currentPrice;
     }
 
-   function sqrt(uint256 x) public pure returns (uint256 y) {
+    function sqrt(uint256 x) public pure returns (uint256 y) {
         uint256 z = (x + 1) / 2;
         y = x;
         while (z < y) {
@@ -707,6 +700,7 @@ contract MainEngine is IERC721Receiver, Ownable, ILayerZeroComposer {
             z = (x / z + z) / 2;
         }
     }
+
     function getPoolReserves(address tokenAddress) public view returns (uint256 tokenReserve, uint256 ethReserve) {
         address pool = tokenInfo[tokenAddress].pool;
         (address token0, address token1) = orderTokens(tokenAddress);

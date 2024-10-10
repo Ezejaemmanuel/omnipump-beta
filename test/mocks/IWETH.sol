@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-/// @title Interface for WETH9
-
-interface IWETH9 is IERC20 {
+interface IWETH9 {
     /// @notice Deposit ether to get wrapped ether
     function deposit() external payable;
 
